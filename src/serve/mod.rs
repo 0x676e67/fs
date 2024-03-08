@@ -1,8 +1,13 @@
+mod solver;
 mod task;
 
 use std::convert::Infallible;
+use std::str::FromStr;
 
+use self::solver::Solver;
 use self::task::{Task, TaskResult};
+use crate::model::{ModelType, Predictor};
+use crate::serve::solver::SolverType;
 use crate::{model, BootArgs};
 use anyhow::Result;
 use image::DynamicImage;
@@ -11,11 +16,12 @@ use reqwest::StatusCode;
 use tokio::sync::OnceCell;
 use warp::filters::body::BodyDeserializeError;
 use warp::reject::{Reject, Rejection};
-use warp::reply::Reply;
+use warp::reply::{Json, Reply};
 use warp::Filter;
 
 static API_KEY: OnceCell<Option<String>> = OnceCell::const_new();
 static SUBMIT_LIMIT: OnceCell<Option<usize>> = OnceCell::const_new();
+static SOLVER: OnceCell<Solver> = OnceCell::const_new();
 
 pub struct Serve(BootArgs);
 
@@ -32,6 +38,15 @@ impl Serve {
         // Init submit limit
         SUBMIT_LIMIT.set(Some(self.0.multi_image_limit))?;
 
+        // Init fallback solver
+        if let (Some(solver), Some(key)) = (self.0.fallback_solver, self.0.fallback_key) {
+            let _ = SOLVER.set(Solver::new(
+                SolverType::from_str(&solver)?,
+                key,
+                self.0.fallback_endpoint,
+                self.0.fallback_image_limit,
+            ));
+        }
         // Init routes
         let routes = warp::path("task")
             .and(warp::post())
@@ -75,57 +90,140 @@ impl Serve {
 /// Handle the task
 async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
     // Check the API key
-    check_api_key(task.api_key).await?;
+    check_api_key(task.api_key.as_deref()).await?;
     // Check the submit limit
     check_submit_limit(task.images.len()).await?;
 
-    // Solve the task
-    match model::get_predictor(task.typed) {
-        Ok(predictor) => {
-            let objects = if task.images.len() == 1 {
-                let image = decode_image(&task.images[0])
-                    .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-                let answer = predictor
-                    .predict(image)
-                    .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-
-                vec![answer as u32]
-            } else {
-                let mut objects = task
-                    .images
-                    .into_par_iter()
-                    .enumerate()
-                    .map(|(index, image)| {
-                        // decode the image
-                        let image = decode_image(&image)?;
-                        let answer = predictor.predict(image)?;
-                        Ok((index, answer as u32))
-                    })
-                    .collect::<Result<Vec<(usize, u32)>>>()
-                    .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-
-                objects.sort_by_key(|&(index, _)| index);
-                objects
-                    .into_iter()
-                    .map(|(_, answer)| answer)
-                    .collect::<Vec<u32>>()
-            };
-
-            let result = TaskResult {
-                error: None,
-                solve: true,
-                objects,
-            };
-            return Ok(warp::reply::json(&result));
-        }
-        Err(e) => {
-            return Err(warp::reject::custom(BadRequest(e.to_string())));
-        }
+    // If the model type is valid, use fallback solver
+    if let Ok(model) = ModelType::from_str(task.game_variant_instructions.0.as_str()) {
+        // handle the solver task
+        handle_solver_task(task, model).await
+    } else {
+        // handle the fallback solver task
+        handle_fallback_solver_task(task).await
     }
 }
 
+/// Handle the model task
+async fn handle_solver_task(task: Task, model: ModelType) -> Result<Json, Rejection> {
+    let predictor =
+        model::get_predictor(model).map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+
+    let objects = if task.images.len() == 1 {
+        handle_single_image_task(&task.images[0], predictor)?
+    } else {
+        handle_multiple_images_task(task.images, predictor)?
+    };
+
+    let result = TaskResult {
+        error: None,
+        solve: true,
+        objects,
+    };
+    Ok(warp::reply::json(&result))
+}
+
+/// Handle the single image task
+fn handle_single_image_task<P: Predictor + ?Sized>(
+    image: &String,
+    predictor: &P,
+) -> Result<Vec<i32>, Rejection> {
+    let image = decode_image(image).map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+    let answer = predictor
+        .predict(image)
+        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+
+    Ok(vec![answer])
+}
+
+/// Handle the multiple images task
+fn handle_multiple_images_task<P: Predictor + ?Sized>(
+    images: Vec<String>,
+    predictor: &P,
+) -> Result<Vec<i32>, Rejection> {
+    let mut objects = images
+        .into_par_iter()
+        .enumerate()
+        .map(|(index, image)| {
+            let image = decode_image(&image)?;
+            let answer = predictor.predict(image)?;
+            Ok((index, answer))
+        })
+        .collect::<Result<Vec<(usize, i32)>>>()
+        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+
+    objects.sort_by_key(|&(index, _)| index);
+    Ok(objects.into_iter().map(|(_, answer)| answer).collect())
+}
+
+/// Handle the fallback solver task
+async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
+    let solver = SOLVER.get().ok_or_else(|| {
+        warp::reject::custom(InternalServerError("solver is not initialized".to_owned()))
+    })?;
+
+    let (game_variant, instructions) = task.game_variant_instructions;
+
+    let answers = if task.images.len() == 1 {
+        solver
+            .submit_task(solver::SubmitTask {
+                image: Some(&task.images[0]),
+                images: None,
+                game_variant_instructions: (&game_variant, &instructions),
+            })
+            .await
+            .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?
+    } else {
+        let mut answers = Vec::with_capacity(task.images.len());
+        match solver.solver() {
+            solver::SolverType::Yescaptcha => {
+                // single image
+                for image in task.images {
+                    // submit task
+                    let answer = solver
+                        .submit_task(solver::SubmitTask {
+                            image: Some(&image),
+                            images: None,
+                            game_variant_instructions: (&game_variant, &instructions),
+                        })
+                        .await
+                        .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                    answers.extend(answer);
+                }
+            }
+            solver::SolverType::Capsolver => {
+                // split chunk images
+                let images_chunk = task.images.chunks(solver.limit().max(1));
+
+                // submit multiple images task
+                for chunk in images_chunk {
+                    // submit task
+                    let answer = solver
+                        .submit_task(solver::SubmitTask {
+                            image: None,
+                            images: Some(chunk),
+                            game_variant_instructions: (&game_variant, &instructions),
+                        })
+                        .await
+                        .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                    answers.extend(answer);
+                }
+            }
+        }
+
+        answers
+    };
+
+    let result = TaskResult {
+        error: None,
+        solve: true,
+        objects: answers,
+    };
+    Ok(warp::reply::json(&result))
+}
+
 /// Check the API key
-async fn check_api_key(api_key: Option<String>) -> Result<(), Rejection> {
+async fn check_api_key(api_key: Option<&str>) -> Result<(), Rejection> {
     if let Some(Some(key)) = API_KEY.get() {
         if let Some(api_key) = api_key {
             if key.ne(&api_key) {
@@ -162,12 +260,17 @@ fn decode_image(base64_string: &String) -> Result<DynamicImage> {
 struct BadRequest(String);
 
 #[derive(Debug)]
+struct InternalServerError(String);
+
+#[derive(Debug)]
 struct InvalidTApiKeyError;
 
 #[derive(Debug)]
 struct InvalidSubmitLimitError;
 
 impl Reject for BadRequest {}
+
+impl Reject for InternalServerError {}
 
 impl Reject for InvalidTApiKeyError {}
 
@@ -197,6 +300,13 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
             message = format!("Invalid submit limit: {}", limit.unwrap_or(0));
         } else {
             message = "Invalid submit limit".to_owned();
+        }
+    } else if let Some(_) = err.find::<InternalServerError>() {
+        code = StatusCode::INTERNAL_SERVER_ERROR;
+        if let Some(limit) = SUBMIT_LIMIT.get() {
+            message = format!("Internal Server Error: {}", limit.unwrap_or(0));
+        } else {
+            message = "Internal Server Error".to_owned();
         }
     } else {
         tracing::info!("Unhandled application error: {:?}", err);

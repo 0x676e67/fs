@@ -14,6 +14,10 @@ fn main() {
         model_dir: Some(PathBuf::from("models")),
         num_threads: 4,
         allocator: AllocatorType::Arena,
+        fallback_solver: None,
+        fallback_key: None,
+        fallback_developer_id: None,
+        fallback_endpoint: None,
     })
     .unwrap();
 
