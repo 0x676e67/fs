@@ -9,37 +9,6 @@ pub fn check_input_image_size(image: &image::DynamicImage) -> Result<()> {
     }
     Ok(())
 }
-fn image_processing(
-    sub_image: image::DynamicImage,
-    input_shape: (u32, u32),
-    is_grayscale: bool,
-) -> Result<Array4<f32>> {
-    if is_grayscale {
-        let normalized_vec: Vec<f32> = sub_image
-            .into_luma8()
-            .into_raw()
-            .into_iter()
-            .map(|v| v as f32 / 255.0)
-            .collect();
-        let normalized_image = Array4::from_shape_vec(
-            (1, 1, input_shape.0 as usize, input_shape.1 as usize),
-            normalized_vec,
-        )?;
-        return Ok(normalized_image);
-    }
-
-    let normalized_vec: Vec<f32> = sub_image
-        .into_rgb8()
-        .into_raw()
-        .into_iter()
-        .map(|v| v as f32 / 255.0)
-        .collect();
-    let normalized_image = Array4::from_shape_vec(
-        (1, input_shape.0 as usize, input_shape.1 as usize, 3),
-        normalized_vec,
-    )?;
-    Ok(normalized_image.permuted_axes([0, 3, 1, 2]))
-}
 
 #[inline]
 pub fn process_pair_classifier_ans_image(
@@ -88,6 +57,38 @@ pub fn process_classifier_image(
         image::imageops::FilterType::Lanczos3,
     );
     image_processing(sub_image, input_shape, false)
+}
+
+fn image_processing(
+    sub_image: image::DynamicImage,
+    input_shape: (u32, u32),
+    is_grayscale: bool,
+) -> Result<Array4<f32>> {
+    if is_grayscale {
+        let normalized_vec: Vec<f32> = sub_image
+            .into_luma8()
+            .into_raw()
+            .into_iter()
+            .map(|v| v as f32 / 255.0)
+            .collect();
+        let normalized_image = Array4::from_shape_vec(
+            (1, 1, input_shape.0 as usize, input_shape.1 as usize),
+            normalized_vec,
+        )?;
+        return Ok(normalized_image);
+    }
+
+    let normalized_vec: Vec<f32> = sub_image
+        .into_rgb8()
+        .into_raw()
+        .into_iter()
+        .map(|v| v as f32 / 255.0)
+        .collect();
+    let normalized_image = Array4::from_shape_vec(
+        (1, input_shape.0 as usize, input_shape.1 as usize, 3),
+        normalized_vec,
+    )?;
+    Ok(normalized_image.permuted_axes([0, 3, 1, 2]))
 }
 
 pub fn crop_funcaptcha_image(
