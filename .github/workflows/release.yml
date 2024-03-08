@@ -12,49 +12,47 @@ concurrency:
 
 jobs:
 
-  # build:
-  #   name: Build
-  #   runs-on: ubuntu-latest
-  #   environment: Linux
-  #   steps:
-  #     - uses: actions/checkout@v3
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    environment: Linux
+    steps:
+      - uses: actions/checkout@v3
 
-  #     - name: Install depends
-  #       run: |
-  #         sudo apt update && sudo apt install upx rename -y
+      - name: Install depends
+        run: |
+          sudo apt update && sudo apt install upx rename -y
 
-  #     - name: Get tag
-  #       if: startsWith(github.ref, 'refs/tags/')
-  #       id: tag
-  #       uses: dawidd6/action-get-tag@v1
-  #       with:
-  #         strip_v: true
+      - name: Get tag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: tag
+        uses: dawidd6/action-get-tag@v1
+        with:
+          strip_v: true
 
-  #     - name: Tag Check
-  #       run: |
-  #         echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_ENV
-  #         echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
-  #         if [ -z "${{ steps.tag.outputs.tag }}" ]; then
-  #           echo "tag=latest" >> $GITHUB_OUTPUT
-  #           echo "tag=latest" >> $GITHUB_ENV
-  #         fi
+      - name: Tag Check
+        run: |
+          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_ENV
+          echo "tag=${{ steps.tag.outputs.tag }}" >> $GITHUB_OUTPUT
+          if [ -z "${{ steps.tag.outputs.tag }}" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "tag=latest" >> $GITHUB_ENV
+          fi
 
-  #     - name: Build package
-  #       shell: bash
-  #       run: |
-  #         docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=linux ./build.sh"
-  #         docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=macos ./build.sh"
-  #         docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=windows ./build.sh"
+      - name: Build package
+        shell: bash
+        run: |
+          docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=linux /build/build.sh"
           
-  #     - name: Upload binaries to GitHub Release
-  #       uses: softprops/action-gh-release@v1
-  #       if: startsWith(github.ref, 'refs/tags/')
-  #       with:
-  #         token: ${{ secrets.CR_PAT }}
-  #         files: |
-  #           bin/*
-  #         prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
-  #         generate_release_notes: true
+      - name: Upload binaries to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          token: ${{ secrets.CR_PAT }}
+          files: |
+            bin/*
+          prerelease: ${{ contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          generate_release_notes: true
 
   macos:
     runs-on: macos-latest
@@ -129,6 +127,12 @@ jobs:
           registry: ghcr.io
           username: gngpp
           password: ${{ secrets.CR_PAT }}
+
+      - name: Build and push
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          docker buildx build --platform linux/amd64,linux/arm64/v8 -t ghcr.io/gngpp/fcsrv:latest -t ghcr.io/gngpp/fcsrv:${{ steps.tag.outputs.tag }} . --push
+
 
       - name: Build and push
         if: startsWith(github.ref, 'refs/tags/')
