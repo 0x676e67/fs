@@ -92,7 +92,7 @@ impl ImageClassifierPredictor {
             .into_owned()
             .into_iter()
             .collect();
-        return Ok(output);
+        Ok(output)
     }
 
     #[inline]

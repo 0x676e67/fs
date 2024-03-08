@@ -32,36 +32,9 @@ Currently supports the following models:
 - `hand_number_puzzle`
 - `dicematch`
 
-### Usage
+#### Description
 
 > Parallel image processing is enabled by default. If your CPU is very weak (referring to 0.1 CPU), please do not use it.
-
-```shell
-# Run
-fcsrv run 
-
-# Start Daemon (Run in the background), must use sudo
-fcsrv start
-
-# Restart Daemon, must use sudo
-fcsrv restart
-
-# Stop Daemon, must use sudo
-fcsrv stop
-
-# Show Daemon log
-fcsrv log
-
-# Show Daemon status
-fcsrv status
-
-# Online Update
-fcsrv update
-```
-
-### Command Manual
-
-#### Description
 
 - `--debug`, Debug mode
 - `--bind`, Http service listening address, default 0.0.0.0:8000
@@ -133,7 +106,7 @@ Options:
           Print help
 ```
 
-### Example
+### Examples
 
 Run on docker
 
@@ -141,6 +114,35 @@ Run on docker
 docker run --rm -it -p 8000:8000 --name=fcsrv \
   -v $(pwd)/models:/models \
   ghcr.io/gngpp/fcsrv:latest run --model-dir /models
+```
+
+Run on Ubuntu/Debian
+
+```shell
+wget https://github.com/gngpp/fcsrv/releases/download/v0.1.8/fcsrv-0.1.8-x86_64-unknown-linux-gnu.tar.tar.gz
+tar -xf fcsrv-0.1.8-x86_64-unknown-linux-gnu.tar.gz
+mv ./fcsrv /bin/fcsrv
+
+# Update the application
+fcsrv update
+
+# Run server
+fcsrv run
+
+# Start server daemon
+fcsrv start
+
+# Restart server daemon
+fcsrv restart
+
+# Stop server daemon
+fcsrv stop
+
+# Show the server daemon process
+fcsrv status
+
+# Show the server daemon log
+fcsrv log
 ```
 
 - Request
