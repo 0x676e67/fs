@@ -31,10 +31,7 @@ log() {
 
 # Build support paltform target
 # 1. Linux (force musl)
-linux_target=(
-  "x86_64-unknown-linux-gnu:mimalloc"
-  "aarch64-unknown-linux-gnu:mimalloc"
-)
+linux_target=("x86_64-unknown-linux-gnu:mimalloc")
 
 # 2. MacOS
 macos_target=(
@@ -72,7 +69,7 @@ build_linux_target() {
     build_target=$(echo $target | cut -d':' -f1)
     feature=$(echo $target | cut -d':' -f2)
     log "info" "Building ${target}..."
-    if cargo zigbuild --release --target "${build_target}" --features "${feature}"; then
+    if cargo build --release --target "${build_target}" --features "${feature}"; then
       compress_and_move $build_target
       log "info" "Build ${target} done"
     else
