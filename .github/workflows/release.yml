@@ -12,8 +12,8 @@ concurrency:
 
 jobs:
 
-  build:
-    name: Build
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
     environment: Linux
     steps:
