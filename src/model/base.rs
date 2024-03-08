@@ -138,7 +138,8 @@ fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> 
     let model_file = initialize_model(onnx, model_dir, args.update_check)?;
     let session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
-        .with_parallel_execution(false)?
+        .with_parallel_execution(true)?
+        .with_memory_pattern(true)?
         .with_intra_threads(args.num_threads as i16)?
         .with_allocator(args.allocator)?
         .with_model_from_file(model_file)?;
