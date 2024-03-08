@@ -18,6 +18,8 @@ mod rockstack;
 mod shadows;
 mod train_coordinates;
 
+use std::str::FromStr;
+
 use self::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
     cardistance::CardistancePredictor, coordinatesmatch::CoordinatesMatchPredictor,
@@ -31,7 +33,6 @@ use self::{
 use crate::BootArgs;
 use anyhow::Result;
 use image::DynamicImage;
-use serde::Deserialize;
 use tokio::sync::OnceCell;
 
 static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
@@ -161,14 +162,11 @@ pub enum ModelType {
     Dicematch,
 }
 
-impl<'de> Deserialize<'de> for ModelType {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        let s = String::deserialize(deserializer)?;
+impl FromStr for ModelType {
+    type Err = anyhow::Error;
 
-        match s.as_str() {
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
             "3d_rollball_animals" => Ok(ModelType::M3dRollballAnimals),
             "3d_rollball_objects" => Ok(ModelType::M3dRollballObjects),
             "coordinatesmatch" => Ok(ModelType::Coordinatesmatch),
@@ -187,7 +185,7 @@ impl<'de> Deserialize<'de> for ModelType {
             "hand_number_puzzle" => Ok(ModelType::HandNumberPuzzle),
             "dicematch" => Ok(ModelType::Dicematch),
             // fallback to M3dRollballObjects
-            _ => Ok(ModelType::M3dRollballObjects),
+            _ => Err(anyhow::anyhow!("unknown model type")),
         }
     }
 }

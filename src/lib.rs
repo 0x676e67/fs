@@ -42,7 +42,7 @@ pub enum Commands {
     Update,
 }
 
-#[derive(Args, Clone, Debug)]
+#[derive(Args, Clone)]
 pub struct BootArgs {
     /// Debug mode
     #[clap(short, long)]
@@ -83,12 +83,28 @@ pub struct BootArgs {
     /// Execution provider allocator e.g. device, arena (ONNX Runtime)
     #[clap(long, default_value = "device", value_parser = alloc_parser)]
     pub allocator: ort::AllocatorType,
+
+    /// Fallback solver, supported: "yescaptcha / capsolver"
+    #[clap(short = 'S', long, default_value = "yescaptcha")]
+    pub fallback_solver: Option<String>,
+
+    /// Fallback solver client key
+    #[clap(short = 'K', long, requires = "fallback_solver")]
+    pub fallback_key: Option<String>,
+
+    /// Fallback solver endpoint
+    #[clap(short = 'E', long, requires = "fallback_solver")]
+    pub fallback_endpoint: Option<String>,
+
+    /// Fallback image limit
+    #[clap(short = 'D', long, requires = "fallback_solver", default_value = "1")]
+    pub fallback_image_limit: usize,
 }
 
 fn alloc_parser(s: &str) -> anyhow::Result<ort::AllocatorType> {
     match s {
         "device" => Ok(ort::AllocatorType::Device),
         "arena" => Ok(ort::AllocatorType::Arena),
-        _ => anyhow::bail!("Invalid allocator type"),
+        _ => Err(anyhow::anyhow!("Invalid allocator type")),
     }
 }

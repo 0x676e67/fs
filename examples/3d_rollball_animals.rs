@@ -13,6 +13,10 @@ fn main() {
         model_dir: None,
         num_threads: 4,
         allocator: AllocatorType::Arena,
+        fallback_solver: None,
+        fallback_key: None,
+        fallback_developer_id: None,
+        fallback_endpoint: None,
     })
     .unwrap();
 

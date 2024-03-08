@@ -1,4 +1,3 @@
-use crate::model::ModelType;
 use anyhow::Error as AnyhowError;
 use image::ImageError;
 use serde::{Deserialize, Serialize};
@@ -7,11 +6,10 @@ use serde::{Deserialize, Serialize};
 pub struct Task {
     /// API key
     pub api_key: Option<String>,
-    /// model type, e.g. 3d_rollball_animals
-    #[serde(rename = "type")]
-    pub typed: ModelType,
     /// base64 image list, e.g. ["/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkS"]
     pub images: Vec<String>,
+    /// image type variant, e.g. ["3d_rollball_objects", "Use the arrows to rotate the object to face in the direction of the hand"]
+    pub game_variant_instructions: (String, String),
 }
 
 #[derive(Debug, Serialize)]
@@ -22,7 +20,7 @@ pub struct TaskResult {
     /// whether the model is a solve
     pub solve: bool,
     /// whether the model is a classifier
-    pub objects: Vec<u32>,
+    pub objects: Vec<i32>,
 }
 
 impl From<ImageError> for TaskResult {
