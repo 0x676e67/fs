@@ -16,7 +16,7 @@ fn main() {
         allocator: AllocatorType::Arena,
         fallback_solver: None,
         fallback_key: None,
-        fallback_developer_id: None,
+        fallback_image_limit: 3,
         fallback_endpoint: None,
     })
     .unwrap();
