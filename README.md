@@ -59,8 +59,8 @@ Commands:
   start    Start server daemon
   restart  Restart server daemon
   stop     Stop server daemon
-  status   Show the server daemon process
   log      Show the server daemon log
+  ps       Show the server daemon process
   update   Update the application
   help     Print this message or the help of the given subcommand(s)
 
@@ -139,7 +139,7 @@ fcsrv restart
 fcsrv stop
 
 # Show the server daemon process
-fcsrv status
+fcsrv ps
 
 # Show the server daemon log
 fcsrv log

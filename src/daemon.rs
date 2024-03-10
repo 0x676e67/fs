@@ -8,7 +8,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use daemonize::Daemonize;
 
-use crate::{model, serve::Serve, BootArgs};
+use crate::{serve::Serve, BootArgs};
 
 #[cfg(target_family = "unix")]
 pub(crate) const PID_PATH: &str = "/var/run/fcsrv.pid";
@@ -50,8 +50,6 @@ pub fn run(args: BootArgs) -> Result<()> {
         )
         .with(tracing_subscriber::fmt::layer())
         .init();
-    // Init model
-    model::init_predictor(&args)?;
     Serve::new(args).run()
 }
 

@@ -19,6 +19,7 @@ use warp::reject::{Reject, Rejection};
 use warp::reply::{Json, Reply};
 use warp::Filter;
 
+static ARGS: OnceCell<BootArgs> = OnceCell::const_new();
 static API_KEY: OnceCell<Option<String>> = OnceCell::const_new();
 static SUBMIT_LIMIT: OnceCell<Option<usize>> = OnceCell::const_new();
 static SOLVER: OnceCell<Solver> = OnceCell::const_new();
@@ -32,6 +33,9 @@ impl Serve {
 
     #[tokio::main]
     pub async fn run(self) -> Result<()> {
+        // Init args
+        ARGS.set(self.0.clone())?;
+
         // Init API key
         API_KEY.set(self.0.api_key)?;
 
@@ -47,6 +51,7 @@ impl Serve {
                 self.0.fallback_image_limit,
             ));
         }
+
         // Init routes
         let routes = warp::path("task")
             .and(warp::post())
@@ -96,8 +101,12 @@ async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
 
     // If the model type is valid, use fallback solver
     if let Ok(model) = ModelType::from_str(task.game_variant_instructions.0.as_str()) {
+        // Get the args
+        let args = ARGS.get().ok_or_else(|| {
+            warp::reject::custom(InternalServerError("args is not initialized".to_owned()))
+        })?;
         // handle the solver task
-        handle_solver_task(task, model).await
+        handle_solver_task(args, task, model).await
     } else {
         // handle the fallback solver task
         handle_fallback_solver_task(task).await
@@ -105,9 +114,14 @@ async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
 }
 
 /// Handle the model task
-async fn handle_solver_task(task: Task, model: ModelType) -> Result<Json, Rejection> {
-    let predictor =
-        model::get_predictor(model).map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+async fn handle_solver_task(
+    args: &BootArgs,
+    task: Task,
+    model: ModelType,
+) -> Result<Json, Rejection> {
+    let predictor = model::get_predictor(model, args)
+        .await
+        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
 
     let objects = if task.images.len() == 1 {
         handle_single_image_task(&task.images[0], predictor)?
