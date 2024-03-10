@@ -1,8 +1,11 @@
+use std::path::PathBuf;
+
 use fcsrv::{model::ModelType, BootArgs};
 use ort::AllocatorType;
 
-fn main() {
-    fcsrv::model::init_predictor(&BootArgs {
+#[tokio::main]
+async fn main() {
+    let args = BootArgs {
         debug: false,
         bind: "0.0.0.0:8000".parse().unwrap(),
         tls_cert: None,
@@ -10,17 +13,18 @@ fn main() {
         api_key: None,
         multi_image_limit: 1,
         update_check: false,
-        model_dir: None,
+        model_dir: Some(PathBuf::from("models")),
         num_threads: 4,
         allocator: AllocatorType::Arena,
         fallback_solver: None,
         fallback_key: None,
         fallback_image_limit: 3,
         fallback_endpoint: None,
-    })
-    .unwrap();
+    };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::M3dRollballAnimals).unwrap();
+    let predictor = fcsrv::model::get_predictor(ModelType::M3dRollballAnimals, &args)
+        .await
+        .unwrap();
 
     // Read image file images/3d_rollball_animals/0bcc74b7-487c-4db4-8d48-7d2d2091ae23_3.jpg
     let image_file =

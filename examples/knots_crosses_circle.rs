@@ -2,8 +2,9 @@ use fcsrv::{model::ModelType, BootArgs};
 use ort::AllocatorType;
 use std::path::PathBuf;
 
-fn main() {
-    fcsrv::model::init_predictor(&BootArgs {
+#[tokio::main]
+async fn main() {
+    let args = BootArgs {
         debug: false,
         bind: "0.0.0.0:8000".parse().unwrap(),
         tls_cert: None,
@@ -18,10 +19,11 @@ fn main() {
         fallback_key: None,
         fallback_image_limit: 3,
         fallback_endpoint: None,
-    })
-    .unwrap();
+    };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::KnotsCrossesCircle).unwrap();
+    let predictor = fcsrv::model::get_predictor(ModelType::KnotsCrossesCircle, &args)
+        .await
+        .unwrap();
 
     let image_file = std::fs::read("images/knotsCrossesCircle/knotsCrossesCircle_0.jpg").unwrap();
     let guess = predictor

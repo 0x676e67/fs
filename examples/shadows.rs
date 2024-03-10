@@ -2,8 +2,9 @@ use fcsrv::{model::ModelType, BootArgs};
 use ort::AllocatorType;
 use std::path::PathBuf;
 
-fn main() {
-    fcsrv::model::init_predictor(&BootArgs {
+#[tokio::main]
+async fn main() {
+    let args = BootArgs {
         debug: false,
         bind: "0.0.0.0:8000".parse().unwrap(),
         tls_cert: None,
@@ -18,10 +19,11 @@ fn main() {
         fallback_key: None,
         fallback_image_limit: 3,
         fallback_endpoint: None,
-    })
-    .unwrap();
+    };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::Shadows).unwrap();
+    let predictor = fcsrv::model::get_predictor(ModelType::Shadows, &args)
+        .await
+        .unwrap();
 
     // Read image file images/shadows/0bf82e3c5abec9553e21c8a8515d7b6f3d94545eff465d9f5ff4e23fb07b0741_1.jpg
     let image_file = std::fs::read(
