@@ -4,7 +4,6 @@ use ndarray::Array4;
 use ort::{GraphOptimizationLevel, Session};
 use sha2::Digest;
 use sha2::Sha256;
-use std::sync::OnceLock;
 use std::{
     collections::HashMap,
     f32, fs,
@@ -19,8 +18,6 @@ use super::image_processing::check_input_image_size;
 use super::image_processing::process_classifier_image;
 use super::image_processing::process_pair_classifier_ans_image;
 use super::image_processing::process_pair_classifier_image;
-
-static INIT_VERSION: OnceLock<()> = OnceLock::new();
 
 pub struct ImagePairClassifierPredictor((Session, bool));
 pub struct ImageClassifierPredictor(Session);
@@ -126,13 +123,12 @@ fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> 
                 .join(".funcaptcha_models")
         });
 
-    if INIT_VERSION.get().is_none() {
+    if args.update_check {
         // check version.json is exist
         if model_dir.join("version.json").exists() {
             // delete version.json
             fs::remove_file(model_dir.join("version.json"))?;
         }
-        let _ = INIT_VERSION.set(());
     }
 
     let model_file = initialize_model(onnx, model_dir, args.update_check)?;
@@ -168,16 +164,11 @@ fn initialize_model(
     let version_json_path = format!("{}/version.json", model_dir.display());
 
     // Check if version.json exists
-    let version_info = if PathBuf::from(&version_json_path).exists() && !update_check {
-        if update_check {
-            tracing::info!("checking for model update...");
-            download_file(&version_url, &version_json_path)?;
-        }
+    let version_info = if PathBuf::from(&version_json_path).exists() {
         let info: HashMap<String, String> =
             serde_json::from_str(&fs::read_to_string(&version_json_path)?)?;
         info
     } else {
-        tracing::info!("version.json not found, downloading...");
         download_file(&version_url, &version_json_path)?;
         let info: HashMap<String, String> =
             serde_json::from_str(&fs::read_to_string(version_json_path)?)?;
@@ -185,7 +176,6 @@ fn initialize_model(
     };
 
     if !Path::new(&model_filename).exists() || update_check {
-        tracing::info!("model {model_name} not found, downloading...");
         download_file(&model_url, &model_filename)?;
 
         let expected_hash = &version_info[&model_name
@@ -194,9 +184,7 @@ fn initialize_model(
             .ok_or_else(|| anyhow::anyhow!("model name is not valid"))?
             .to_string()];
 
-        tracing::info!("expected hash: {}", expected_hash);
         let current_hash = file_sha256(&model_filename)?;
-        tracing::info!("current hash: {}", current_hash);
 
         if expected_hash.ne(&current_hash) {
             tracing::info!("model {} hash mismatch, downloading...", model_filename);

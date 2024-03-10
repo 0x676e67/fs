@@ -32,17 +32,17 @@ pub enum Commands {
     /// Stop server daemon
     #[cfg(target_family = "unix")]
     Stop,
-    /// Show the server daemon process
-    #[cfg(target_family = "unix")]
-    PS,
     /// Show the server daemon log
     #[cfg(target_family = "unix")]
     Log,
+    /// Show the server daemon process
+    #[cfg(target_family = "unix")]
+    PS,
     /// Update the application
     Update,
 }
 
-#[derive(Args, Clone)]
+#[derive(Args, Clone, Debug)]
 pub struct BootArgs {
     /// Debug mode
     #[clap(short, long)]

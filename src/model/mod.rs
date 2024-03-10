@@ -59,85 +59,98 @@ pub trait Predictor: Send + Sync {
     fn predict(&self, image: DynamicImage) -> Result<i32>;
 }
 
-/// Load the models predictor
-pub fn init_predictor(args: &BootArgs) -> Result<()> {
-    set_predictor(&M3D_ROLLBALL_PREDICTOR, || M3DRotationPredictor::new(args))?;
-    set_predictor(&COORDINATES_MATCH_PREDICTOR, || {
-        CoordinatesMatchPredictor::new(args)
-    })?;
-    set_predictor(&HOPSCOTCH_HIGHSEC_PREDICTOR, || {
-        HopscotchHighsecPredictor::new(args)
-    })?;
-    set_predictor(&TRAIN_COORDINATES_PREDICTOR, || {
-        TrainCoordinatesPredictor::new(args)
-    })?;
-    set_predictor(&PENGUIN_PREDICTOR, || PenguinPredictor::new(args))?;
-    set_predictor(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(args))?;
-    set_predictor(&BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL, || {
-        BrokenJigsawbrokenjigsaw_swap::new(args)
-    })?;
-    set_predictor(&FRANKENHEAD_PREDICTOR, || FrankenheadPredictor::new(args))?;
-    set_predictor(&COUNTING_PREDICTOR, || CountingPredictor::new(args))?;
-    set_predictor(&CARD_PREDICTOR, || CardPredictor::new(args))?;
-    set_predictor(&ROCKSTACK_PREDICTOR, || RockstackPredictor::new(args))?;
-    set_predictor(&CARDISTANCE_PREDICTOR, || CardistancePredictor::new(args))?;
-    set_predictor(&PENGUINS_ICON_PREDICTOR, || {
-        PenguinsIconPredictor::new(args)
-    })?;
-    set_predictor(&KNOTS_CROSSES_CIRCLE_PREDICTOR, || {
-        KnotsCrossesCirclePredictor::new(args)
-    })?;
-    set_predictor(&HAND_NUMBER_PUZZLE_PREDICTOR, || {
-        HandNumberPuzzlePredictor::new(args)
-    })?;
-    set_predictor(&DICEMATCH_PREDICTOR, || DicematchMatchPredictor::new(args))?;
-    Ok(())
-}
-
 /// Get the model predictor for the given model type
-pub fn get_predictor(model_type: ModelType) -> Result<&'static dyn Predictor> {
+pub async fn get_predictor(
+    model_type: ModelType,
+    args: &BootArgs,
+) -> Result<&'static dyn Predictor> {
     let predictor = match model_type {
         ModelType::M3dRollballAnimals | ModelType::M3dRollballObjects => {
-            get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR)?
+            get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR, || M3DRotationPredictor::new(args))
+                .await?
         }
-        ModelType::Coordinatesmatch => get_predictor_from_cell(&COORDINATES_MATCH_PREDICTOR)?,
-        ModelType::HopscotchHighsec => get_predictor_from_cell(&HOPSCOTCH_HIGHSEC_PREDICTOR)?,
-        ModelType::TrainCoordinates => get_predictor_from_cell(&TRAIN_COORDINATES_PREDICTOR)?,
-        ModelType::Penguin => get_predictor_from_cell(&PENGUIN_PREDICTOR)?,
-        ModelType::Shadows => get_predictor_from_cell(&SHADOWS_PREDICTOR)?,
+        ModelType::Coordinatesmatch => {
+            get_predictor_from_cell(&COORDINATES_MATCH_PREDICTOR, || {
+                CoordinatesMatchPredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::HopscotchHighsec => {
+            get_predictor_from_cell(&HOPSCOTCH_HIGHSEC_PREDICTOR, || {
+                HopscotchHighsecPredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::TrainCoordinates => {
+            get_predictor_from_cell(&TRAIN_COORDINATES_PREDICTOR, || {
+                TrainCoordinatesPredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::Penguin => {
+            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinPredictor::new(args)).await?
+        }
+        ModelType::Shadows => {
+            get_predictor_from_cell(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(args)).await?
+        }
         ModelType::BrokenJigsawbrokenjigsaw_swap => {
-            get_predictor_from_cell(&BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL)?
+            get_predictor_from_cell(&BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL, || {
+                BrokenJigsawbrokenjigsaw_swap::new(args)
+            })
+            .await?
         }
-        ModelType::Frankenhead => get_predictor_from_cell(&FRANKENHEAD_PREDICTOR)?,
-        ModelType::Counting => get_predictor_from_cell(&COUNTING_PREDICTOR)?,
-        ModelType::Card => get_predictor_from_cell(&CARD_PREDICTOR)?,
-        ModelType::Rockstack => get_predictor_from_cell(&ROCKSTACK_PREDICTOR)?,
-        ModelType::Cardistance => get_predictor_from_cell(&CARDISTANCE_PREDICTOR)?,
-        ModelType::PenguinsIcon => get_predictor_from_cell(&PENGUINS_ICON_PREDICTOR)?,
-        ModelType::KnotsCrossesCircle => get_predictor_from_cell(&KNOTS_CROSSES_CIRCLE_PREDICTOR)?,
-        ModelType::HandNumberPuzzle => get_predictor_from_cell(&HAND_NUMBER_PUZZLE_PREDICTOR)?,
-        ModelType::Dicematch => get_predictor_from_cell(&DICEMATCH_PREDICTOR)?,
+        ModelType::Frankenhead => {
+            get_predictor_from_cell(&FRANKENHEAD_PREDICTOR, || FrankenheadPredictor::new(args))
+                .await?
+        }
+        ModelType::Counting => {
+            get_predictor_from_cell(&COUNTING_PREDICTOR, || CountingPredictor::new(args)).await?
+        }
+        ModelType::Card => {
+            get_predictor_from_cell(&CARD_PREDICTOR, || CardPredictor::new(args)).await?
+        }
+        ModelType::Rockstack => {
+            get_predictor_from_cell(&ROCKSTACK_PREDICTOR, || RockstackPredictor::new(args)).await?
+        }
+        ModelType::Cardistance => {
+            get_predictor_from_cell(&CARDISTANCE_PREDICTOR, || CardistancePredictor::new(args))
+                .await?
+        }
+        ModelType::PenguinsIcon => {
+            get_predictor_from_cell(&PENGUINS_ICON_PREDICTOR, || {
+                PenguinsIconPredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::KnotsCrossesCircle => {
+            get_predictor_from_cell(&KNOTS_CROSSES_CIRCLE_PREDICTOR, || {
+                KnotsCrossesCirclePredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::HandNumberPuzzle => {
+            get_predictor_from_cell(&HAND_NUMBER_PUZZLE_PREDICTOR, || {
+                HandNumberPuzzlePredictor::new(args)
+            })
+            .await?
+        }
+        ModelType::Dicematch => {
+            get_predictor_from_cell(&DICEMATCH_PREDICTOR, || DicematchMatchPredictor::new(args))
+                .await?
+        }
     };
     Ok(predictor)
 }
 
-fn set_predictor<P, F>(cell: &OnceCell<P>, creator: F) -> Result<()>
-where
-    P: Predictor,
-    F: FnOnce() -> Result<P>,
-{
-    cell.set(creator()?)
-        .map_err(|_| anyhow::anyhow!("failed to load models"))
-}
-
-fn get_predictor_from_cell<P>(cell: &'static OnceCell<P>) -> Result<&'static dyn Predictor>
+async fn get_predictor_from_cell<P, F>(
+    cell: &'static OnceCell<P>,
+    creator: F,
+) -> Result<&'static dyn Predictor>
 where
     P: Predictor + 'static,
+    F: FnOnce() -> Result<P>,
 {
-    let predictor = cell
-        .get()
-        .ok_or_else(|| anyhow::anyhow!("models not loaded"))?;
-    Ok(predictor as &'static dyn Predictor)
+    Ok(cell.get_or_try_init(|| async { creator() }).await? as &'static dyn Predictor)
 }
 
 #[derive(Debug)]
