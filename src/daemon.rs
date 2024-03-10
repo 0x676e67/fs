@@ -19,10 +19,10 @@ pub(crate) const DEFAULT_STDERR_PATH: &str = "/var/run/fcsrv.err";
 
 /// Get the pid of the daemon
 #[cfg(target_family = "unix")]
-pub(crate) fn get_pid() -> Option<String> {
+pub(crate) fn get_pid() -> Option<i32> {
     if let Ok(data) = std::fs::read(PID_PATH) {
         let binding = String::from_utf8(data).expect("pid file is not utf8");
-        return Some(binding.trim().to_string());
+        return Some(binding.trim().parse().expect("pid file is not a number"));
     }
     None
 }
@@ -111,7 +111,6 @@ pub fn stop() -> Result<()> {
     check_root();
 
     if let Some(pid) = get_pid() {
-        let pid = pid.parse::<i32>()?;
         for _ in 0..360 {
             if signal::kill(Pid::from_raw(pid), signal::SIGINT).is_err() {
                 break;
@@ -133,11 +132,34 @@ pub fn restart(args: BootArgs) -> Result<()> {
 
 /// Show the status of the daemon
 #[cfg(target_family = "unix")]
-pub fn status() {
+pub fn status() -> Result<()> {
+    use sysinfo::System;
+
     match get_pid() {
-        Some(pid) => println!("fcsrv is running with pid: {}", pid),
-        None => println!("fcsrv is not running"),
+        Some(pid) => {
+            let mut sys = System::new();
+
+            // First we update all information of our `System` struct.
+            sys.refresh_all();
+
+            // Display processes ID
+            let process = sys
+                .processes()
+                .into_iter()
+                .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
+                .ok_or_else(|| anyhow::anyhow!("openai is not running"))?;
+
+            println!("{:<6} {:<6}  {:<6}", "PID", "CPU(%)", "MEM(MB)");
+            println!(
+                "{:<6}   {:<6.1}  {:<6.1}",
+                process.0,
+                process.1.cpu_usage(),
+                (process.1.memory() as f64) / 1024.0 / 1024.0
+            );
+        }
+        None => println!("openai is not running"),
     }
+    Ok(())
 }
 
 /// Show the log of the daemon

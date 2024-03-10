@@ -14,7 +14,7 @@ fn main() -> crate::Result<()> {
         #[cfg(target_family = "unix")]
         Commands::Stop => daemon::stop()?,
         #[cfg(target_family = "unix")]
-        Commands::Status => daemon::status(),
+        Commands::PS => daemon::status()?,
         #[cfg(target_family = "unix")]
         Commands::Log => daemon::log()?,
         Commands::Update => update::update()?,

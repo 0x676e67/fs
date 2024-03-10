@@ -34,7 +34,7 @@ pub enum Commands {
     Stop,
     /// Show the server daemon process
     #[cfg(target_family = "unix")]
-    Status,
+    PS,
     /// Show the server daemon log
     #[cfg(target_family = "unix")]
     Log,
