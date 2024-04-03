@@ -1,6 +1,7 @@
 use anyhow::Result;
 use image::DynamicImage;
 use ndarray::Array4;
+use ort::MemoryInfo;
 use ort::{GraphOptimizationLevel, Session};
 use sha2::Digest;
 use sha2::Sha256;
@@ -46,7 +47,7 @@ impl ImagePairClassifierPredictor {
 
         let outputs = self.0 .0.run(inputs)?;
         let output = outputs[0]
-            .extract_tensor::<f32>()?
+            .try_extract_tensor::<f32>()?
             .view()
             .t()
             .into_owned()
@@ -83,7 +84,7 @@ impl ImageClassifierPredictor {
             "input" => image,
         }?)?;
         let output = outputs[0]
-            .extract_tensor::<f32>()?
+            .try_extract_tensor::<f32>()?
             .view()
             .t()
             .into_owned()
@@ -136,9 +137,12 @@ fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> 
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         .with_parallel_execution(true)?
         .with_memory_pattern(true)?
-        .with_intra_threads(args.num_threads as i16)?
-        .with_allocator(args.allocator)?
-        .with_model_from_file(model_file)?;
+        .with_intra_threads(args.num_threads as usize)?
+        .with_allocator(MemoryInfo::new_cpu(
+            args.allocator,
+            ort::MemoryType::Default,
+        )?)?
+        .commit_from_file(model_file)?;
     Ok(session)
 }
 
