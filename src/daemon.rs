@@ -145,7 +145,7 @@ pub fn status() -> Result<()> {
                 .processes()
                 .iter()
                 .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
-                .ok_or_else(|| anyhow::anyhow!("openai is not running"))?;
+                .ok_or_else(|| anyhow::anyhow!("fcsrv is not running"))?;
 
             println!("{:<6} {:<6}  {:<6}", "PID", "CPU(%)", "MEM(MB)");
             println!(
@@ -155,7 +155,7 @@ pub fn status() -> Result<()> {
                 (process.1.memory() as f64) / 1024.0 / 1024.0
             );
         }
-        None => println!("openai is not running"),
+        None => println!("fcsrv is not running"),
     }
     Ok(())
 }
