@@ -1,3 +1,14 @@
+# Sponsors
+
+### [NextCaptcha](https://nextcaptcha.com)
+
+[![NextCaptcha](images/sponsor/nextcatcha/NextCapcha3.gif)](https://nextcaptcha.com)
+
+[NextCaptcha](https://nextcaptcha.com) is
+Next Generation CAPTCHA Solving Service | Captcha Solver, Auto Bypass Captcha Service
+
+NextCaptcha is a Captcha solver for recaptcha, hcaptcha, funcaptcha online Service. Cheap captcha solving service
+
 [![CI](https://github.com/gngpp/fcsrv/actions/workflows/ci.yml/badge.svg)](https://github.com/gngpp/fcsrv/actions/workflows/ci.yml)
 [![CI](https://github.com/gngpp/fcsrv/actions/workflows/release.yml/badge.svg)](https://github.com/gngpp/fcsrv/actions/workflows/release.yml)
  <a target="_blank" href="https://github.com/gngpp/fcsrv/blob/main/LICENSE">
