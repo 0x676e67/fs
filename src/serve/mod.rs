@@ -315,13 +315,9 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
         } else {
             message = "Invalid submit limit".to_owned();
         }
-    } else if let Some(_) = err.find::<InternalServerError>() {
+    } else if let Some(msg) = err.find::<InternalServerError>() {
         code = StatusCode::INTERNAL_SERVER_ERROR;
-        if let Some(limit) = SUBMIT_LIMIT.get() {
-            message = format!("Internal Server Error: {}", limit.unwrap_or(0));
-        } else {
-            message = "Internal Server Error".to_owned();
-        }
+        message = msg.0.to_owned();
     } else {
         tracing::info!("Unhandled application error: {:?}", err);
         code = StatusCode::INTERNAL_SERVER_ERROR;
