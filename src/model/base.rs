@@ -52,7 +52,7 @@ impl ImagePairClassifierPredictor {
             .into_owned()
             .into_iter()
             .collect();
-        return Ok(output);
+        Ok(output)
     }
 
     #[inline]
@@ -119,7 +119,7 @@ fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> 
         .map(|x| x.to_owned())
         .unwrap_or_else(|| {
             homedir::home_dir()
-                .unwrap_or(PathBuf::new())
+                .unwrap_or_default()
                 .join(".funcaptcha_models")
         });
 
@@ -152,7 +152,7 @@ fn initialize_model(
     // Create parent directory if it does not exist
     if let Some(parent_dir) = Path::new(&model_filename).parent() {
         if !parent_dir.exists() {
-            fs::create_dir_all(&parent_dir)?;
+            fs::create_dir_all(parent_dir)?;
         }
     }
 
@@ -169,7 +169,7 @@ fn initialize_model(
             serde_json::from_str(&fs::read_to_string(&version_json_path)?)?;
         info
     } else {
-        download_file(&version_url, &version_json_path)?;
+        download_file(version_url, &version_json_path)?;
         let info: HashMap<String, String> =
             serde_json::from_str(&fs::read_to_string(version_json_path)?)?;
         info
@@ -179,7 +179,7 @@ fn initialize_model(
         download_file(&model_url, &model_filename)?;
 
         let expected_hash = &version_info[&model_name
-            .split(".")
+            .split('.')
             .next()
             .ok_or_else(|| anyhow::anyhow!("model name is not valid"))?
             .to_string()];

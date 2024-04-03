@@ -143,7 +143,7 @@ pub fn status() -> Result<()> {
             // Display processes ID
             let process = sys
                 .processes()
-                .into_iter()
+                .iter()
                 .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
                 .ok_or_else(|| anyhow::anyhow!("openai is not running"))?;
 

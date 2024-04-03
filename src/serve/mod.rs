@@ -302,13 +302,13 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
     } else if let Some(e) = err.find::<BadRequest>() {
         code = StatusCode::BAD_REQUEST;
         message = e.0.to_owned();
-    } else if let Some(_) = err.find::<InvalidTApiKeyError>() {
+    } else if err.find::<InvalidTApiKeyError>().is_some() {
         code = StatusCode::UNAUTHORIZED;
         message = "Invalid API key".to_owned();
     } else if let Some(e) = err.find::<BodyDeserializeError>() {
         code = StatusCode::BAD_REQUEST;
         message = e.to_string();
-    } else if let Some(_) = err.find::<InvalidSubmitLimitError>() {
+    } else if err.find::<InvalidSubmitLimitError>().is_some() {
         code = StatusCode::BAD_REQUEST;
         if let Some(limit) = SUBMIT_LIMIT.get() {
             message = format!("Invalid submit limit: {}", limit.unwrap_or(0));
