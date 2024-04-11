@@ -1,5 +1,15 @@
 # Sponsors
 
+### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
+
+[![Capsolver](images/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv)
+
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) is
+an AI-powered service that provides automatic captcha solving capabilities. It supports a range of captcha types,
+including reCAPTCHA, hCaptcha, and FunCaptcha, AWS Captcha, Geetest, image captcha among others. Capsolver offers both
+Chrome and Firefox extensions for ease of use, API integration for developers, and various pricing packages to suit
+different needs.
+
 ### [NextCaptcha](https://nextcaptcha.com)
 
 [![NextCaptcha](images/sponsor/nextcatcha/NextCapcha3.gif)](https://nextcaptcha.com)
