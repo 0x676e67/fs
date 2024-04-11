@@ -2,7 +2,7 @@
 
 ### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
 
-[![Capsolver](images/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv)
+[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv)
 
 [Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) is
 an AI-powered service that provides automatic captcha solving capabilities. It supports a range of captcha types,
@@ -12,11 +12,9 @@ different needs.
 
 ### [NextCaptcha](https://nextcaptcha.com)
 
-[![NextCaptcha](images/sponsor/nextcatcha/NextCapcha3.gif)](https://nextcaptcha.com)
+[![NextCaptcha](docs/sponsor/nextcatcha/NextCapcha3.gif)](https://nextcaptcha.com)
 
-[NextCaptcha](https://nextcaptcha.com) is Next Generation CAPTCHA Solving Service | Captcha Solver, Auto Bypass Captcha Service
-
-[NextCaptcha](https://nextcaptcha.com) is a Captcha solver for recaptcha, hcaptcha, funcaptcha online Service. Cheap captcha solving service
+[NextCaptcha](https://nextcaptcha.com) is Next Generation CAPTCHA Solving Service | Captcha Solver, Auto Bypass Captcha Service, Captcha solver for recaptcha, hcaptcha, funcaptcha online Service. Cheap captcha solving service
 
 [![CI](https://github.com/gngpp/fcsrv/actions/workflows/ci.yml/badge.svg)](https://github.com/gngpp/fcsrv/actions/workflows/ci.yml)
 [![CI](https://github.com/gngpp/fcsrv/actions/workflows/release.yml/badge.svg)](https://github.com/gngpp/fcsrv/actions/workflows/release.yml)
