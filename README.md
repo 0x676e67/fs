@@ -137,8 +137,8 @@ docker run --rm -it -p 8000:8000 --name=fcsrv \
 Run on Ubuntu/Debian
 
 ```shell
-wget https://github.com/gngpp/fcsrv/releases/download/v0.2.0/fcsrv-0.2.0-x86_64-unknown-linux-gnu.tar.gz
-tar -xf fcsrv-0.2.0-x86_64-unknown-linux-gnu.tar.gz
+wget https://github.com/gngpp/fcsrv/releases/download/v0.2.1/fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xf fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
 mv ./fcsrv /bin/fcsrv
 
 # Update the application
