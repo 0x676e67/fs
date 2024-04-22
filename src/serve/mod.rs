@@ -131,7 +131,7 @@ async fn handle_solver_task(
 
     let result = TaskResult {
         error: None,
-        solve: true,
+        solved: true,
         objects,
     };
     Ok(warp::reply::json(&result))
@@ -176,63 +176,55 @@ async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
         warp::reject::custom(InternalServerError("solver is not initialized".to_owned()))
     })?;
 
+    if task.images.len() <= 0 {
+        return Err(warp::reject::custom(BadRequest("No images".to_owned())));
+    }
+
     let (game_variant, instructions) = task.game_variant_instructions;
 
-    let answers = if task.images.len() == 1 {
-        solver
-            .submit_task(solver::SubmitTask {
-                image: Some(&task.images[0]),
-                images: None,
-                game_variant_instructions: (&game_variant, &instructions),
-            })
-            .await
-            .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?
-    } else {
-        let mut answers = Vec::with_capacity(task.images.len());
-        match solver.solver() {
-            solver::SolverType::Yescaptcha => {
-                // single image
-                for image in task.images {
-                    // submit task
-                    let answer = solver
-                        .submit_task(solver::SubmitTask {
-                            image: Some(&image),
-                            images: None,
-                            game_variant_instructions: (&game_variant, &instructions),
-                        })
-                        .await
-                        .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
-                    answers.extend(answer);
-                }
-            }
-            solver::SolverType::Capsolver => {
-                // split chunk images
-                let images_chunk = task.images.chunks(solver.limit().max(1));
-
-                // submit multiple images task
-                for chunk in images_chunk {
-                    // submit task
-                    let answer = solver
-                        .submit_task(solver::SubmitTask {
-                            image: None,
-                            images: Some(chunk),
-                            game_variant_instructions: (&game_variant, &instructions),
-                        })
-                        .await
-                        .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
-                    answers.extend(answer);
-                }
+    let mut answers = Vec::with_capacity(task.images.len());
+    match solver.solver() {
+        solver::SolverType::Yescaptcha => {
+            // single image
+            for image in task.images {
+                // submit task
+                let answer = solver
+                    .submit_task(solver::SubmitTask {
+                        image: Some(&image),
+                        images: None,
+                        game_variant_instructions: (&game_variant, &instructions),
+                    })
+                    .await
+                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                answers.extend(answer);
             }
         }
+        solver::SolverType::Capsolver => {
+            // split chunk images
+            let images_chunk = task.images.chunks(solver.limit().max(1));
 
-        answers
-    };
+            // submit multiple images task
+            for chunk in images_chunk {
+                // submit task
+                let answer = solver
+                    .submit_task(solver::SubmitTask {
+                        image: None,
+                        images: Some(chunk),
+                        game_variant_instructions: (&game_variant, &instructions),
+                    })
+                    .await
+                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                answers.extend(answer);
+            }
+        }
+    }
 
     let result = TaskResult {
         error: None,
-        solve: true,
+        solved: true,
         objects: answers,
     };
+
     Ok(warp::reply::json(&result))
 }
 
@@ -326,7 +318,7 @@ async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
 
     let json = warp::reply::json(&TaskResult {
         error: Some(message),
-        solve: false,
+        solved: false,
         objects: vec![],
     });
 

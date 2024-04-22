@@ -18,7 +18,7 @@ pub struct TaskResult {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
     /// whether the model is a solve
-    pub solve: bool,
+    pub solved: bool,
     /// whether the model is a classifier
     pub objects: Vec<i32>,
 }
@@ -27,7 +27,7 @@ impl From<ImageError> for TaskResult {
     fn from(result: ImageError) -> Self {
         Self {
             error: Some(result.to_string()),
-            solve: false,
+            solved: false,
             objects: vec![],
         }
     }
@@ -36,7 +36,7 @@ impl From<base64::DecodeError> for TaskResult {
     fn from(result: base64::DecodeError) -> Self {
         Self {
             error: Some(result.to_string()),
-            solve: false,
+            solved: false,
             objects: vec![],
         }
     }
@@ -46,7 +46,7 @@ impl From<AnyhowError> for TaskResult {
     fn from(err: AnyhowError) -> Self {
         Self {
             error: Some(err.to_string()),
-            solve: false,
+            solved: false,
             objects: vec![],
         }
     }
