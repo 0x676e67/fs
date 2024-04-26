@@ -16,7 +16,7 @@ rayon = "1.8.1"
 serde_json = "1.0.111"
 sha2 = "0.10.8"
 clap = { version = "4.4.18", features = ["derive", "env"] }
-self_update = { version = "0.39.0", default-features = false, features = ["rustls", "archive-tar", "compression-flate2"]  }
+self_update = { version = "0.40.0", default-features = false, features = ["rustls", "archive-tar", "compression-flate2"]  }
 reqwest = { version = "0.11", default-features = false, features = ["rustls"] }
 tokio = { version = "1.35.1", features = ["full"] }
 warp = { version = "0.3.6", features = ["tls"] }
