@@ -29,15 +29,6 @@ impl FromStr for SolverType {
     }
 }
 
-impl ToString for SolverType {
-    fn to_string(&self) -> String {
-        match self {
-            Self::Yescaptcha => "yescaptcha".to_string(),
-            Self::Capsolver => "capsolver".to_string(),
-        }
-    }
-}
-
 pub struct Solver {
     typed: SolverType,
     client: reqwest::Client,

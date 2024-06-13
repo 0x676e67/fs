@@ -176,7 +176,7 @@ async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
         warp::reject::custom(InternalServerError("solver is not initialized".to_owned()))
     })?;
 
-    if task.images.len() <= 0 {
+    if task.images.is_empty() {
         return Err(warp::reject::custom(BadRequest("No images".to_owned())));
     }
 
