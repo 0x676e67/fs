@@ -160,9 +160,9 @@ fn initialize_model(
         }
     }
 
-    let version_url = "https://github.com/MagicalMadoka/funcaptcha-challenger/releases/download/model/version.json";
+    let version_url = "https://github.com/0x676e67/fcsrv/releases/download/model/version.json";
     let model_url = format!(
-        "https://github.com/MagicalMadoka/funcaptcha-challenger/releases/download/model/{model_name}",
+        "https://github.com/0x676e67/fcsrv/releases/download/model/{model_name}",
     );
 
     let version_json_path = format!("{}/version.json", model_dir.display());
