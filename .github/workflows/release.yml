@@ -42,7 +42,7 @@ jobs:
       - name: Build package
         shell: bash
         run: |
-          docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=linux /build/build.sh"
+          docker run --rm -t -v $(pwd):/build -w /build -e tag=$tag ghcr.io/gngpp/cargo-zigbuild -c "os=linux /build/.github/workflows/build.sh"
           
       - name: Upload binaries to GitHub Release
         uses: softprops/action-gh-release@v1
