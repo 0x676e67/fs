@@ -2,7 +2,7 @@
 
 Funcaptcha solver server
 
-- If you are willing to provide more types of images to help me train the model, please contact me: gngppz@gmail.com
+- If you are willing to provide more types of images to help me train the model, please contact me: 0x676e67z@gmail.com
 
 ### Model
 
@@ -116,13 +116,13 @@ Run on docker
 ```shell
 docker run --rm -it -p 8000:8000 --name=fcsrv \
   -v $(pwd)/models:/models \
-  ghcr.io/gngpp/fcsrv:latest run --model-dir /models
+  ghcr.io/0x676e67/fcsrv:latest run --model-dir /models
 ```
 
 Run on Ubuntu/Debian
 
 ```shell
-wget https://github.com/gngpp/fcsrv/releases/download/v0.2.1/fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+wget https://github.com/0x676e67/fcsrv/releases/download/v0.2.1/fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
 tar -xf fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
 mv ./fcsrv /bin/fcsrv
 
@@ -187,18 +187,18 @@ curl --location 'http://127.0.0.1:8000/task' \
 - Linux compile, Ubuntu machine for example:
 
 ```shell
-git clone https://github.com/gngpp/fcsrv.git && cd fcsrv
+git clone https://github.com/0x676e67/fcsrv.git && cd fcsrv
 cargo build --release
 ```
 
 ### Contributing
 
-If you would like to submit your contribution, please open a [Pull Request](https://github.com/gngpp/fcsrv/pulls).
+If you would like to submit your contribution, please open a [Pull Request](https://github.com/0x676e67/fcsrv/pulls).
 
 ### Getting help
 
-Your question might already be answered on the [issues](https://github.com/gngpp/fcsrv/issues)
+Your question might already be answered on the [issues](https://github.com/0x676e67/fcsrv/issues)
 
 ### License
 
-**fcsrv** © [gngpp](https://github.com/gngpp), Released under the [MIT](./LICENSE) License.
+**fcsrv** © [0x676e67](https://github.com/0x676e67), Released under the [MIT](./LICENSE) License.

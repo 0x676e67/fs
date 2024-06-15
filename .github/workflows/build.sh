@@ -111,6 +111,9 @@ compress_and_move() {
   cd -
 }
 
+# Try update rust
+rustup update
+
 # Execute
 if [ "$os" == "linux" ]; then
   log "info" "Building linux target..."

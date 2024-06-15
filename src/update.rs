@@ -3,7 +3,7 @@ use self_update::cargo_crate_version;
 pub fn update() -> crate::Result<()> {
     use self_update::update::UpdateStatus;
     let status = self_update::backends::github::Update::configure()
-        .repo_owner("gngpp")
+        .repo_owner("0x676e67")
         .repo_name("fcsrv")
         .bin_name("fcsrv")
         .target(self_update::get_target())
