@@ -9,7 +9,7 @@ description = "Funcaptcha solver server"
 [dependencies]
 anyhow = "1.0.79"
 daemonize = "0.5.0"
-image = "0.25.0"
+image = "0.25"
 ndarray = "0.15.6"
 ort = "2.0.0-alpha.4"
 rayon = "1.8.1"
