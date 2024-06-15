@@ -17,6 +17,7 @@ mod penguins_icon;
 mod rockstack;
 mod shadows;
 mod train_coordinates;
+mod numericalmatch;
 
 use std::str::FromStr;
 
@@ -33,6 +34,7 @@ use self::{
 use crate::BootArgs;
 use anyhow::Result;
 use image::DynamicImage;
+use numericalmatch::Numericalmatch;
 use tokio::sync::OnceCell;
 
 static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
@@ -53,6 +55,7 @@ static KNOTS_CROSSES_CIRCLE_PREDICTOR: OnceCell<KnotsCrossesCirclePredictor> =
     OnceCell::const_new();
 static HAND_NUMBER_PUZZLE_PREDICTOR: OnceCell<HandNumberPuzzlePredictor> = OnceCell::const_new();
 static DICEMATCH_PREDICTOR: OnceCell<DicematchMatchPredictor> = OnceCell::const_new();
+static NUMERICALMATCH_PREDICTOR: OnceCell<Numericalmatch> = OnceCell::const_new();
 
 /// Predictor trait
 pub trait Predictor: Send + Sync {
@@ -65,6 +68,9 @@ pub async fn get_predictor(
     args: &BootArgs,
 ) -> Result<&'static dyn Predictor> {
     let predictor = match model_type {
+        ModelType::Numericalmatch => {
+            get_predictor_from_cell(&NUMERICALMATCH_PREDICTOR, || Numericalmatch::new(args)).await?
+        }
         ModelType::M3dRollballAnimals | ModelType::M3dRollballObjects => {
             get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR, || M3DRotationPredictor::new(args))
                 .await?
@@ -173,6 +179,7 @@ pub enum ModelType {
     KnotsCrossesCircle,
     HandNumberPuzzle,
     Dicematch,
+    Numericalmatch,
 }
 
 impl FromStr for ModelType {
@@ -197,6 +204,7 @@ impl FromStr for ModelType {
             "knotsCrossesCircle" => Ok(ModelType::KnotsCrossesCircle),
             "hand_number_puzzle" => Ok(ModelType::HandNumberPuzzle),
             "dicematch" => Ok(ModelType::Dicematch),
+            "numericalmatch" => Ok(ModelType::Numericalmatch),
             // fallback to M3dRollballObjects
             _ => Err(anyhow::anyhow!("unknown model type")),
         }
