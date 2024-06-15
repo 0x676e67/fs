@@ -3,6 +3,7 @@ mod base;
 mod brokenJigsawbrokenjigsaw_swap;
 mod card;
 mod cardistance;
+mod conveyor;
 mod coordinatesmatch;
 mod counting;
 mod dicematch;
@@ -33,8 +34,9 @@ use self::{
 };
 use crate::BootArgs;
 use anyhow::Result;
+use conveyor::ConveyorPredictor;
 use image::DynamicImage;
-use numericalmatch::Numericalmatch;
+use numericalmatch::NumericalmatchPredictor;
 use tokio::sync::OnceCell;
 
 static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
@@ -55,7 +57,8 @@ static KNOTS_CROSSES_CIRCLE_PREDICTOR: OnceCell<KnotsCrossesCirclePredictor> =
     OnceCell::const_new();
 static HAND_NUMBER_PUZZLE_PREDICTOR: OnceCell<HandNumberPuzzlePredictor> = OnceCell::const_new();
 static DICEMATCH_PREDICTOR: OnceCell<DicematchMatchPredictor> = OnceCell::const_new();
-static NUMERICALMATCH_PREDICTOR: OnceCell<Numericalmatch> = OnceCell::const_new();
+static NUMERICALMATCH_PREDICTOR: OnceCell<NumericalmatchPredictor> = OnceCell::const_new();
+static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
 
 /// Predictor trait
 pub trait Predictor: Send + Sync {
@@ -68,8 +71,14 @@ pub async fn get_predictor(
     args: &BootArgs,
 ) -> Result<&'static dyn Predictor> {
     let predictor = match model_type {
+        ModelType::Conveyor => {
+            get_predictor_from_cell(&CONVEYOR_PREDICTOR, || ConveyorPredictor::new(args)).await?
+        }
         ModelType::Numericalmatch => {
-            get_predictor_from_cell(&NUMERICALMATCH_PREDICTOR, || Numericalmatch::new(args)).await?
+            get_predictor_from_cell(&NUMERICALMATCH_PREDICTOR, || {
+                NumericalmatchPredictor::new(args)
+            })
+            .await?
         }
         ModelType::M3dRollballAnimals | ModelType::M3dRollballObjects => {
             get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR, || M3DRotationPredictor::new(args))
@@ -180,6 +189,7 @@ pub enum ModelType {
     HandNumberPuzzle,
     Dicematch,
     Numericalmatch,
+    Conveyor,
 }
 
 impl FromStr for ModelType {
@@ -205,6 +215,7 @@ impl FromStr for ModelType {
             "hand_number_puzzle" => Ok(ModelType::HandNumberPuzzle),
             "dicematch" => Ok(ModelType::Dicematch),
             "numericalmatch" => Ok(ModelType::Numericalmatch),
+            "conveyor" => Ok(ModelType::Conveyor),
             // fallback to M3dRollballObjects
             _ => Err(anyhow::anyhow!("unknown model type")),
         }
