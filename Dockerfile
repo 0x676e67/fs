@@ -8,6 +8,6 @@ RUN cargo build --release
 
 FROM ubuntu:noble-20231214
 
-LABEL org.opencontainers.image.source = "https://github.com/gngpp/fcsrv"
+LABEL org.opencontainers.image.source = "https://github.com/0x676e67/fcsrv"
 COPY --from=builder /src/target/release/fcsrv /bin/fcsrv
 ENTRYPOINT [ "/bin/fcsrv"]
