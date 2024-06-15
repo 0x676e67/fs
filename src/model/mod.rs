@@ -12,12 +12,12 @@ mod hopscotch_highsec;
 mod image_processing;
 mod knots_crosses_circle;
 mod m3d_rollball_objects;
+mod numericalmatch;
 mod penguin;
 mod penguins_icon;
 mod rockstack;
 mod shadows;
 mod train_coordinates;
-mod numericalmatch;
 
 use std::str::FromStr;
 
