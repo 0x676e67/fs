@@ -12,6 +12,7 @@ mod hand_number_puzzle;
 mod hopscotch_highsec;
 mod image_processing;
 mod knots_crosses_circle;
+mod lumber_length_game;
 mod m3d_rollball_objects;
 mod numericalmatch;
 mod penguin;
@@ -37,6 +38,7 @@ use crate::BootArgs;
 use anyhow::Result;
 use conveyor::ConveyorPredictor;
 use image::DynamicImage;
+use lumber_length_game::LumberLengthGamePredictor;
 use numericalmatch::NumericalmatchPredictor;
 use tokio::sync::OnceCell;
 use unbentobjects::UnbentobjectsPredictor;
@@ -62,6 +64,8 @@ static DICEMATCH_PREDICTOR: OnceCell<DicematchMatchPredictor> = OnceCell::const_
 static NUMERICALMATCH_PREDICTOR: OnceCell<NumericalmatchPredictor> = OnceCell::const_new();
 static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
 static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
+static LUMBER_LENGTH_GAME_PREDICTOR: OnceCell<lumber_length_game::LumberLengthGamePredictor> =
+    OnceCell::const_new();
 
 /// Predictor trait
 pub trait Predictor: Send + Sync {
@@ -74,6 +78,12 @@ pub async fn get_predictor(
     args: &BootArgs,
 ) -> Result<&'static dyn Predictor> {
     let predictor = match model_type {
+        ModelType::LumberLengthGame => {
+            get_predictor_from_cell(&LUMBER_LENGTH_GAME_PREDICTOR, || {
+                LumberLengthGamePredictor::new(args)
+            })
+            .await?
+        }
         ModelType::Unbentobjects => {
             get_predictor_from_cell(&UNBENTOBJECTS_PREDICTOR, || {
                 UnbentobjectsPredictor::new(args)
@@ -201,6 +211,7 @@ pub enum ModelType {
     Numericalmatch,
     Conveyor,
     Unbentobjects,
+    LumberLengthGame,
 }
 
 impl FromStr for ModelType {
@@ -228,6 +239,7 @@ impl FromStr for ModelType {
             "numericalmatch" => Ok(ModelType::Numericalmatch),
             "conveyor" => Ok(ModelType::Conveyor),
             "unbentobjects" => Ok(ModelType::Unbentobjects),
+            "lumber-length-game" => Ok(ModelType::LumberLengthGame),
             // fallback to M3dRollballObjects
             _ => Err(anyhow::anyhow!("unknown model type")),
         }
