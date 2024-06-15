@@ -7,11 +7,13 @@ description = "Funcaptcha solver server"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-anyhow = "1.0.79"
-daemonize = "0.5.0"
+anyhow = "1"
+thiserror = "1"
+serde = { version = "1", features = ["derive"] }
+base64 = "0.22"
 image = "0.25"
 ndarray = "0.15.6"
-ort = "2.0.0-alpha.4"
+ort = "2.0.0-rc.2"
 rayon = "1.8.1"
 serde_json = "1.0.111"
 sha2 = "0.10.8"
@@ -20,10 +22,8 @@ self_update = { version = "0.40.0", default-features = false, features = ["rustl
 reqwest = { version = "0.11", default-features = false, features = ["rustls", "json", "blocking"] }
 tokio = { version = "1.35.1", features = ["full"] }
 warp = { version = "0.3.6", features = ["tls"] }
-tracing = "0.1.40"
-tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-serde = { version = "1.0.195", features = ["derive"] }
-base64 = "0.22.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
 version = "0.48.0"
