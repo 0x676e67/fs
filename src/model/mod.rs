@@ -19,6 +19,7 @@ mod penguins_icon;
 mod rockstack;
 mod shadows;
 mod train_coordinates;
+mod unbentobjects;
 
 use std::str::FromStr;
 
@@ -38,6 +39,7 @@ use conveyor::ConveyorPredictor;
 use image::DynamicImage;
 use numericalmatch::NumericalmatchPredictor;
 use tokio::sync::OnceCell;
+use unbentobjects::UnbentobjectsPredictor;
 
 static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
 static COORDINATES_MATCH_PREDICTOR: OnceCell<CoordinatesMatchPredictor> = OnceCell::const_new();
@@ -59,6 +61,7 @@ static HAND_NUMBER_PUZZLE_PREDICTOR: OnceCell<HandNumberPuzzlePredictor> = OnceC
 static DICEMATCH_PREDICTOR: OnceCell<DicematchMatchPredictor> = OnceCell::const_new();
 static NUMERICALMATCH_PREDICTOR: OnceCell<NumericalmatchPredictor> = OnceCell::const_new();
 static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
+static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
 
 /// Predictor trait
 pub trait Predictor: Send + Sync {
@@ -71,6 +74,13 @@ pub async fn get_predictor(
     args: &BootArgs,
 ) -> Result<&'static dyn Predictor> {
     let predictor = match model_type {
+        ModelType::Unbentobjects => {
+            get_predictor_from_cell(&UNBENTOBJECTS_PREDICTOR, || {
+                UnbentobjectsPredictor::new(args)
+            })
+            .await?
+        }
+
         ModelType::Conveyor => {
             get_predictor_from_cell(&CONVEYOR_PREDICTOR, || ConveyorPredictor::new(args)).await?
         }
@@ -190,6 +200,7 @@ pub enum ModelType {
     Dicematch,
     Numericalmatch,
     Conveyor,
+    Unbentobjects,
 }
 
 impl FromStr for ModelType {
@@ -216,6 +227,7 @@ impl FromStr for ModelType {
             "dicematch" => Ok(ModelType::Dicematch),
             "numericalmatch" => Ok(ModelType::Numericalmatch),
             "conveyor" => Ok(ModelType::Conveyor),
+            "unbentobjects" => Ok(ModelType::Unbentobjects),
             // fallback to M3dRollballObjects
             _ => Err(anyhow::anyhow!("unknown model type")),
         }
