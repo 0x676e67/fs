@@ -197,14 +197,19 @@ curl --location 'http://127.0.0.1:8000/task' \
 
 ```shell
 git clone https://github.com/0x676e67/fs.git && cd fs
-# Default features cuda/rocm
 cargo build --release
 
+# If you need cuda support, you can use the following command
+cargo build --release --features cuda
+
+# If you need rocm support, you can use the following command
+cargo build --release --features rocm
+
 # On MacOS, If you need coreml support, you can use the following command
-cargo build --release --no-default-features --features coreml
+cargo build --release --features coreml
 
 # On Windows, If you need onnx support, you can use the following command
-cargo build --release --no-default-features --features directml
+cargo build --release --features directml
 ```
 
 ### Contributing

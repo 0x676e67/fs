@@ -58,7 +58,8 @@ jemallocator = { package = "tikv-jemallocator", version = "0.5.4", optional = tr
 mimalloc = { version = "0.1.39", default-features = false, optional = true }
 
 [features]
-default = ["mimalloc", "cuda", "rocm"]
+default = ["mimalloc"]
+load-dynamic = ["ort/load-dynamic"]
 cuda = ["ort/cuda"]
 rocm = ["ort/rocm"]
 coreml = ["ort/coreml"]
@@ -77,4 +78,7 @@ opt-level = 's'
 codegen-units = 1
 strip = true
 panic = "abort"
+rpath = true
 
+[profile.dev]
+rpath = true
