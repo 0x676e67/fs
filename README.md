@@ -46,7 +46,7 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--fallback-solver`, Fallback solver, supported: "yescaptcha / capsolver", default yescaptcha
 - `--fallback-key`, Fallback solver client key
 - `--fallback-endpoint`, Fallback solver endpoint
-- `--fallback-image-limit`, Fallback image limit, default 1
+- `--fallback-image-limit`, Fallback solver image limit, default 1
 
 ```shell
 $ fc -h
