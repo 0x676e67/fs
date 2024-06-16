@@ -99,7 +99,7 @@ pub struct BootArgs {
     #[clap(short = 'E', long, requires = "fallback_solver")]
     pub fallback_endpoint: Option<String>,
 
-    /// Fallback image limit
+    /// Fallback solver image limit
     #[clap(short = 'D', long, requires = "fallback_solver", default_value = "1")]
     pub fallback_image_limit: usize,
 }
