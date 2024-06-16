@@ -118,8 +118,8 @@ pub async fn run(args: BootArgs) -> Result<()> {
 /// Depending on whether a fallback solver is available, it either uses the solver task or the fallback solver task.
 /// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
 async fn task(
-    State(state): State<Arc<AppState>>, // The application state
-    Json(task): Json<Task>,             // The task to be handled
+    State(state): State<Arc<AppState>>,
+    Json(task): Json<Task>,
 ) -> Result<Json<TaskResult>> {
     // Validate the task
     validate_task(&state, &task)?;
@@ -188,9 +188,9 @@ fn process_image_tasks<P: Predictor + ?Sized>(
         .into_par_iter()
         .enumerate()
         .map(|(index, image)| {
-            let image = decode_image(&image)?; // Decode the image
-            let answer = predictor.predict(image)?; // Predict the answer
-            Ok((index, answer)) // Return the answer
+            let image = decode_image(&image)?;
+            let answer = predictor.predict(image)?;
+            Ok((index, answer))
         })
         .collect::<Result<Vec<(usize, i32)>>>()?;
 
