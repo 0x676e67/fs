@@ -15,6 +15,7 @@
 ArkoseLabs funcaptcha challenge solver server
 
 - If you are willing to provide more types of images to help me train the model, please contact me: <gngppz@gmail.com>
+- Please provide the corresponding array index answer for the image dataset
 
 ### Supported challenges
 
