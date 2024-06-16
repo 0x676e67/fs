@@ -55,8 +55,6 @@ impl ImagePairClassifierPredictor {
         let outputs = self.0 .0.run(inputs)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
-            .view()
-            .t()
             .into_owned()
             .into_iter()
             .collect();
@@ -92,8 +90,6 @@ impl ImageClassifierPredictor {
         }?)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
-            .view()
-            .t()
             .into_owned()
             .into_iter()
             .collect();
