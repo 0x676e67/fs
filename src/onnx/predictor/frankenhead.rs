@@ -6,11 +6,10 @@ pub struct FrankenheadPredictor(ImageClassifierPredictor);
 
 impl FrankenheadPredictor {
     /// Create a new instance of the Frankenhead
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new(
-            "frankenhead.onnx",
-            config,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("frankenhead.onnx", config).await?,
+        ))
     }
 }
 

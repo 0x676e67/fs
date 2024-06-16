@@ -8,11 +8,10 @@ pub struct KnotsCrossesCirclePredictor(ImageClassifierPredictor);
 
 impl KnotsCrossesCirclePredictor {
     /// Create a new instance of the KnotsCrossesCirclePredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new(
-            "knotsCrossesCircle.onnx",
-            config,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("knotsCrossesCircle.onnx", config).await?,
+        ))
     }
 }
 

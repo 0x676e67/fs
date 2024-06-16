@@ -8,12 +8,10 @@ pub struct ConveyorPredictor(ImagePairClassifierPredictor);
 
 impl ConveyorPredictor {
     /// Create a new instance of the ConveyorPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "conveyor.onnx",
-            config,
-            false,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("conveyor.onnx", config, false).await?,
+        ))
     }
 }
 

@@ -7,10 +7,11 @@ use sha2::Digest;
 use sha2::Sha256;
 use std::{
     collections::HashMap,
-    f32, fs,
-    io::{Read, Write},
+    f32,
+    io::Read,
     path::{Path, PathBuf},
 };
+use tokio::fs;
 
 use crate::homedir;
 use crate::onnx::util::{
@@ -19,20 +20,24 @@ use crate::onnx::util::{
 };
 use crate::onnx::ONNXConfig;
 
-pub struct ImagePairClassifierPredictor((Session, bool));
 pub struct ImageClassifierPredictor(Session);
 
-impl ImagePairClassifierPredictor {
-    /// Create a new instance of the ImagePairClassifierPredictor
-    pub fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
-        Ok(Self((create_model_session(onnx, config)?, is_grayscale)))
-    }
-}
+pub struct ImagePairClassifierPredictor((Session, bool));
 
 impl ImageClassifierPredictor {
     /// Create a new instance of the ImageClassifierPredictor
-    pub fn new(onnx: &'static str, config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(create_model_session(onnx, config)?))
+    pub async fn new(onnx: &'static str, config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(create_model_session(onnx, config).await?))
+    }
+}
+
+impl ImagePairClassifierPredictor {
+    /// Create a new instance of the ImagePairClassifierPredictor
+    pub async fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
+        Ok(Self((
+            create_model_session(onnx, config).await?,
+            is_grayscale,
+        )))
     }
 }
 
@@ -112,7 +117,7 @@ impl ImageClassifierPredictor {
     }
 }
 
-fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Session> {
+async fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Session> {
     let model_dir = config
         .model_dir
         .as_ref()
@@ -123,11 +128,11 @@ fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Sessi
         // check version.json is exist
         if model_dir.join("version.json").exists() {
             // delete version.json
-            fs::remove_file(model_dir.join("version.json"))?;
+            fs::remove_file(model_dir.join("version.json")).await?;
         }
     }
 
-    let model_file = initialize_model(onnx, model_dir, config.update_check)?;
+    let model_file = initialize_model(onnx, model_dir, config.update_check).await?;
     let session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         .with_parallel_execution(true)?
@@ -141,17 +146,24 @@ fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Sessi
     Ok(session)
 }
 
-fn initialize_model(
+async fn initialize_model(
     model_name: &'static str,
     model_dir: PathBuf,
     update_check: bool,
 ) -> Result<String> {
+
+    // Create model directory if it does not exist
+    if !model_dir.exists() {
+        tracing::info!("creating model directory: {}", model_dir.display());
+        fs::create_dir_all(&model_dir).await?;
+    }
+
     let model_filename = format!("{}/{model_name}", model_dir.display());
 
     // Create parent directory if it does not exist
     if let Some(parent_dir) = Path::new(&model_filename).parent() {
         if !parent_dir.exists() {
-            fs::create_dir_all(parent_dir)?;
+            fs::create_dir_all(parent_dir).await?;
         }
     }
 
@@ -164,17 +176,17 @@ fn initialize_model(
     // Check if version.json exists
     let version_info = if PathBuf::from(&version_json_path).exists() {
         let info: HashMap<String, String> =
-            serde_json::from_str(&fs::read_to_string(&version_json_path)?)?;
+            serde_json::from_str(&fs::read_to_string(&version_json_path).await?)?;
         info
     } else {
-        download_file(version_url, &version_json_path)?;
+        download_file(version_url, &version_json_path).await?;
         let info: HashMap<String, String> =
-            serde_json::from_str(&fs::read_to_string(version_json_path)?)?;
+            serde_json::from_str(&fs::read_to_string(version_json_path).await?)?;
         info
     };
 
     if !Path::new(&model_filename).exists() || update_check {
-        download_file(&model_url, &model_filename)?;
+        download_file(&model_url, &model_filename).await?;
 
         let expected_hash = &version_info[&model_name
             .split('.')
@@ -186,25 +198,19 @@ fn initialize_model(
 
         if expected_hash.ne(&current_hash) {
             tracing::info!("model {} hash mismatch, downloading...", model_filename);
-            download_file(&model_url, &model_filename)?;
+            download_file(&model_url, &model_filename).await?;
         }
     }
 
     Ok(model_filename)
 }
 
-fn download_file(url: &str, filename: &str) -> Result<()> {
-    let mut response = reqwest::blocking::get(url)?;
-    let mut out = fs::File::create(filename)?;
-    let mut buffer = [0; 1024];
-    tracing::info!("downloading {}...", filename);
-    while let Ok(n) = response.read(&mut buffer) {
-        if n == 0 {
-            break;
-        }
-        out.write_all(&buffer[..n])?;
-    }
+async fn download_file(url: &str, filename: &str) -> Result<()> {
+    let bytes = reqwest::get(url).await?.bytes().await?;
+    let mut out = fs::File::create(filename).await?;
+    tokio::io::copy(&mut bytes.as_ref(), &mut out).await?;
     drop(out);
+    drop(bytes);
     tracing::info!("downloaded {} done", filename);
     Ok(())
 }

@@ -8,13 +8,13 @@ async fn main() {
         .await
         .unwrap();
 
-    let image_file = std::fs::read("images/rockstack/9258513.jpg").unwrap();
+    let image_file = std::fs::read("docs/rockstack/9258513.jpg").unwrap();
     let guess = predictor
         .predict(image::load_from_memory(&image_file).unwrap())
         .unwrap();
     assert_eq!(guess, 3);
 
-    let image_file = std::fs::read("images/rockstack/50444558.jpg").unwrap();
+    let image_file = std::fs::read("docs/rockstack/50444558.jpg").unwrap();
     let guess = predictor
         .predict(image::load_from_memory(&image_file).unwrap())
         .unwrap();

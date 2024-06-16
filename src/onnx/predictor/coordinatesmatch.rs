@@ -7,12 +7,10 @@ pub struct CoordinatesMatchPredictor(ImagePairClassifierPredictor);
 
 impl CoordinatesMatchPredictor {
     /// Create a new instance of the CoordinatesMatchPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "coordinatesmatch.onnx",
-            config,
-            false,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("coordinatesmatch.onnx", config, false).await?,
+        ))
     }
 }
 

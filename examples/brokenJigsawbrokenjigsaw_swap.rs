@@ -9,7 +9,7 @@ async fn main() {
         .unwrap();
 
     let image_file = std::fs::read(
-        "images/BrokenJigsawbrokenjigsaw_swap/1_0763dbd0d732075bba1fda9da7046f10.jpg",
+        "docs/BrokenJigsawbrokenjigsaw_swap/1_0763dbd0d732075bba1fda9da7046f10.jpg",
     )
     .unwrap();
     let guess = predictor

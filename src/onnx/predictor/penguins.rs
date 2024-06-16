@@ -8,8 +8,10 @@ pub struct PenguinsPredictor(ImageClassifierPredictor);
 
 impl PenguinsPredictor {
     /// Create a new instance of the PenguinsPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new("penguin.onnx", config)?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("penguin.onnx", config).await?,
+        ))
     }
 }
 

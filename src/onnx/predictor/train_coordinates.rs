@@ -8,12 +8,10 @@ pub struct TrainCoordinatesPredictor(ImagePairClassifierPredictor);
 
 impl TrainCoordinatesPredictor {
     /// Create a new instance of the TrainCoordinatesPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "train_coordinates.onnx",
-            config,
-            false,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("train_coordinates.onnx", config, false).await?,
+        ))
     }
 }
 

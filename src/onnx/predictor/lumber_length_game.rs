@@ -8,11 +8,10 @@ pub struct LumberLengthGamePredictor(ImageClassifierPredictor);
 
 impl LumberLengthGamePredictor {
     /// Create a new instance of the LumberLengthGamePredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new(
-            "lumber-length-game.onnx",
-            config,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("lumber-length-game.onnx", config).await?,
+        ))
     }
 }
 

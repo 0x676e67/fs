@@ -8,8 +8,10 @@ pub struct ShadowsPredictor(ImageClassifierPredictor);
 
 impl ShadowsPredictor {
     /// Create a new instance of the TrainCoordinatesPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new("shadows.onnx", config)?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("shadows.onnx", config).await?,
+        ))
     }
 }
 
