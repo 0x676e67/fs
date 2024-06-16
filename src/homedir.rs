@@ -8,19 +8,17 @@ pub fn setting_dir(dir: PathBuf) {
 
 #[cfg(target_os = "windows")]
 mod home_dir_windows {
-    use {
-        core::slice::from_raw_parts,
-        std::{
-            ffi::{c_void, OsString},
-            os::windows::prelude::OsStringExt,
-            path::PathBuf,
-            ptr::null_mut,
-        },
-        windows_sys::Win32::{
-            Globalization::lstrlenW,
-            System::Com::CoTaskMemFree,
-            UI::Shell::{FOLDERID_Profile, SHGetKnownFolderPath},
-        },
+    use core::slice::from_raw_parts;
+    use std::{
+        ffi::{c_void, OsString},
+        os::windows::prelude::OsStringExt,
+        path::PathBuf,
+        ptr::null_mut,
+    };
+    use windows_sys::Win32::{
+        Globalization::lstrlenW,
+        System::Com::CoTaskMemFree,
+        UI::Shell::{FOLDERID_Profile, SHGetKnownFolderPath},
     };
 
     /// Return the user's home directory.
@@ -60,10 +58,8 @@ mod home_dir_ne_windows {
     }
 }
 
-use std::{path::PathBuf, sync::OnceLock};
-
-#[cfg(target_os = "windows")]
-pub use home_dir_windows::*;
-
 #[cfg(not(target_os = "windows"))]
 pub use home_dir_ne_windows::*;
+#[cfg(target_os = "windows")]
+pub use home_dir_windows::*;
+use std::{path::PathBuf, sync::OnceLock};

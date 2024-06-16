@@ -1,6 +1,5 @@
 use super::{base::ImageClassifierPredictor, Predictor};
-use crate::onnx::ONNXConfig;
-use crate::Result;
+use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
 pub struct CountingPredictor(ImageClassifierPredictor);
 

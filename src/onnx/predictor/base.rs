@@ -1,4 +1,14 @@
-use crate::Result;
+use crate::{
+    homedir,
+    onnx::{
+        util::{
+            check_input_image_size, process_classifier_image, process_pair_classifier_ans_image,
+            process_pair_classifier_image,
+        },
+        ONNXConfig,
+    },
+    Result,
+};
 use image::DynamicImage;
 use ndarray::Array4;
 #[cfg(feature = "cuda")]
@@ -7,12 +17,10 @@ use ort::CUDAExecutionProvider;
 use ort::CoreMLExecutionProvider;
 #[cfg(feature = "directml")]
 use ort::DirectMLExecutionProvider;
-use ort::MemoryInfo;
 #[cfg(feature = "rocm")]
 use ort::ROCmExecutionProvider;
-use ort::{GraphOptimizationLevel, Session};
-use sha2::Digest;
-use sha2::Sha256;
+use ort::{GraphOptimizationLevel, MemoryInfo, Session};
+use sha2::{Digest, Sha256};
 use std::{
     collections::HashMap,
     f32,
@@ -20,13 +28,6 @@ use std::{
     path::{Path, PathBuf},
 };
 use tokio::fs;
-
-use crate::homedir;
-use crate::onnx::util::{
-    check_input_image_size, process_classifier_image, process_pair_classifier_ans_image,
-    process_pair_classifier_image,
-};
-use crate::onnx::ONNXConfig;
 
 pub struct ImageClassifierPredictor(Session);
 
@@ -57,7 +58,7 @@ impl ImagePairClassifierPredictor {
             "input_right" => right,
         }?;
 
-        let outputs = self.0 .0.run(inputs)?;
+        let outputs = self.0.0.run(inputs)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
             .into_owned()
@@ -73,10 +74,10 @@ impl ImagePairClassifierPredictor {
         let mut max_prediction = f32::NEG_INFINITY;
         let width = image.width();
         let mut max_index = 0;
-        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.0 .1)?;
+        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.0.1)?;
 
         for i in 0..(width / 200) {
-            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.0 .1)?;
+            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.0.1)?;
             let prediction = self.run_prediction(left.clone(), right)?;
             let prediction_value = prediction[0];
             if prediction_value > max_prediction {

@@ -1,6 +1,5 @@
-use axum::{response::IntoResponse, Json};
-
 use crate::serve::TaskResult;
+use axum::{response::IntoResponse, Json};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {

@@ -4,9 +4,11 @@ use serde::{Deserialize, Serialize};
 pub struct Task {
     /// API key
     pub api_key: Option<String>,
-    /// base64 image list, e.g. ["/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkS"]
+    /// base64 image list, e.g.
+    /// ["/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkS"]
     pub images: Vec<String>,
-    /// image type variant, e.g. ["3d_rollball_objects", "Use the arrows to rotate the object to face in the direction of the hand"]
+    /// image type variant, e.g. ["3d_rollball_objects", "Use the arrows to
+    /// rotate the object to face in the direction of the hand"]
     pub game_variant_instructions: (String, String),
 }
 

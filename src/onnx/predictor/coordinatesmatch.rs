@@ -1,8 +1,6 @@
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::Result;
+use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
-
-use crate::onnx::ONNXConfig;
 pub struct CoordinatesMatchPredictor(ImagePairClassifierPredictor);
 
 impl CoordinatesMatchPredictor {

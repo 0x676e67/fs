@@ -1,7 +1,5 @@
-use crate::onnx::ONNXConfig;
-
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::Result;
+use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
 
 pub struct RockstackPredictor(ImagePairClassifierPredictor);

@@ -1,7 +1,5 @@
-use crate::onnx::ONNXConfig;
-
 use super::{base::ImageClassifierPredictor, Predictor};
-use crate::Result;
+use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
 
 pub struct UnbentobjectsPredictor(ImageClassifierPredictor);

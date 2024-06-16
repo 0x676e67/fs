@@ -1,6 +1,4 @@
-use crate::error::Error;
-use crate::serve::Task;
-use crate::Result;
+use crate::{error::Error, serve::Task, Result};
 
 #[derive(Debug)]
 pub enum Variant {
@@ -32,6 +30,7 @@ pub enum Variant {
 
 impl TryFrom<&Task> for Variant {
     type Error = Error;
+
     fn try_from(task: &Task) -> Result<Self> {
         let variant = match task.game_variant_instructions.0.as_str() {
             "3d_rollball_animals" => Variant::M3dRollballAnimals,

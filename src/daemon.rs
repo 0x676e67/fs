@@ -1,5 +1,4 @@
-use crate::Result;
-use crate::{serve, BootArgs};
+use crate::{serve, BootArgs, Result};
 use daemonize::Daemonize;
 use std::{
     fs::{File, Permissions},
@@ -88,8 +87,7 @@ pub fn start(args: BootArgs) -> Result<()> {
 /// Stop the daemon
 #[cfg(target_family = "unix")]
 pub fn stop() -> Result<()> {
-    use nix::sys::signal;
-    use nix::unistd::Pid;
+    use nix::{sys::signal, unistd::Pid};
 
     check_root();
 

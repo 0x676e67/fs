@@ -2,25 +2,25 @@ mod signal;
 mod solver;
 mod task;
 
-use std::str::FromStr;
-use std::sync::Arc;
-
 use self::solver::Solver;
 pub use self::task::Task;
-use crate::error::Error;
-use crate::onnx::Variant;
-use crate::onnx::{ONNXConfig, Predictor};
-use crate::serve::solver::SolverType;
-use crate::Result;
-use crate::{onnx, BootArgs};
-use axum::extract::State;
-use axum::response::{Html, IntoResponse};
-use axum::routing::post;
-use axum::{Json, Router};
-use axum_server::tls_rustls::RustlsConfig;
-use axum_server::Handle;
+use crate::{
+    error::Error,
+    onnx,
+    onnx::{ONNXConfig, Predictor, Variant},
+    serve::solver::SolverType,
+    BootArgs, Result,
+};
+use axum::{
+    extract::State,
+    response::{Html, IntoResponse},
+    routing::post,
+    Json, Router,
+};
+use axum_server::{tls_rustls::RustlsConfig, Handle};
 use image::DynamicImage;
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+use std::{str::FromStr, sync::Arc};
 pub use task::TaskResult;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
 use tracing::Level;
@@ -113,10 +113,12 @@ pub async fn run(args: BootArgs) -> Result<()> {
 }
 
 /// Handle the task
-/// This function is responsible for handling tasks. It takes the application state and a task as input.
-/// It first validates the task, then tries to convert the task to a variant.
-/// Depending on whether a fallback solver is available, it either uses the solver task or the fallback solver task.
-/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+/// This function is responsible for handling tasks. It takes the application
+/// state and a task as input. It first validates the task, then tries to
+/// convert the task to a variant. Depending on whether a fallback solver is
+/// available, it either uses the solver task or the fallback solver task.
+/// The function is asynchronous and returns a Result wrapping a JSON
+/// TaskResult.
 async fn task(
     State(state): State<Arc<AppState>>,
     Json(task): Json<Task>,
@@ -138,11 +140,13 @@ async fn task(
 }
 
 /// Handle the model task
-/// This function is responsible for handling tasks using the model. It takes the ONNX configuration, a variant, and a task as input.
-/// It first gets the model predictor, then processes the task using the predictor.
-/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
-/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
-/// If there is an error during the process, it returns a Result wrapping an error.
+/// This function is responsible for handling tasks using the model. It takes
+/// the ONNX configuration, a variant, and a task as input. It first gets the
+/// model predictor, then processes the task using the predictor. The function
+/// is asynchronous and returns a Result wrapping a JSON TaskResult. If the task
+/// is successfully processed, it returns a Result wrapping a JSON TaskResult
+/// with solved set to true and objects set to the answers. If there is an error
+/// during the process, it returns a Result wrapping an error.
 async fn solver_task(
     config: &ONNXConfig,
     variant: Variant,
@@ -161,11 +165,13 @@ async fn solver_task(
 }
 
 /// Handle the fallback solver task
-/// This function is responsible for handling tasks using the fallback solver. It takes a solver and a task as input.
-/// It processes the task using the solver.
-/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
-/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
-/// If there is an error during the process, it returns a Result wrapping an error.
+/// This function is responsible for handling tasks using the fallback solver.
+/// It takes a solver and a task as input. It processes the task using the
+/// solver. The function is asynchronous and returns a Result wrapping a JSON
+/// TaskResult. If the task is successfully processed, it returns a Result
+/// wrapping a JSON TaskResult with solved set to true and objects set to the
+/// answers. If there is an error during the process, it returns a Result
+/// wrapping an error.
 async fn fallback_solver_task(solver: &Solver, task: Task) -> Result<Json<TaskResult>> {
     // Process the task
     let answers = solver.process(task).await?;
@@ -177,9 +183,11 @@ async fn fallback_solver_task(solver: &Solver, task: Task) -> Result<Json<TaskRe
 }
 
 /// Process image tasks
-/// This function is responsible for processing tasks with one or more images. It takes a vector of images and a predictor as input.
-/// It decodes each image, uses the predictor to predict the answer for each image, and collects the answers in a vector.
-/// The function returns a Result wrapping a vector of integers.
+/// This function is responsible for processing tasks with one or more images.
+/// It takes a vector of images and a predictor as input. It decodes each image,
+/// uses the predictor to predict the answer for each image, and collects the
+/// answers in a vector. The function returns a Result wrapping a vector of
+/// integers.
 fn process_image_tasks<P: Predictor + ?Sized>(
     images: Vec<String>, // The images to be processed
     predictor: &P,       // The predictor to be used
@@ -199,16 +207,16 @@ fn process_image_tasks<P: Predictor + ?Sized>(
 }
 
 /// Validate the task
-/// This function checks if the task is valid. It takes the application state and a task as input.
-/// It first checks if the API key is provided and matches the one in the application state.
-/// Then it checks if the number of images in the task is within the limit.
-/// If any of these checks fail, it returns an error.
-/// If all checks pass, it returns Ok.
+/// This function checks if the task is valid. It takes the application state
+/// and a task as input. It first checks if the API key is provided and matches
+/// the one in the application state. Then it checks if the number of images in
+/// the task is within the limit. If any of these checks fail, it returns an
+/// error. If all checks pass, it returns Ok.
 fn validate_task(state: &Arc<AppState>, task: &Task) -> Result<()> {
     // Check if API key is provided and matches the one in the state
     match &state.api_key {
         Some(api_key) if task.api_key.as_deref() != Some(api_key) => {
-            return Err(Error::InvalidApiKey)
+            return Err(Error::InvalidApiKey);
         }
         _ => (),
     }
