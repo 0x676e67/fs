@@ -124,25 +124,17 @@ async fn task(
     // Validate the task
     validate_task(&state, &task)?;
 
-    // Try to convert task to variant
+    // Try to convert the task to a variant
     let variant_result = Variant::try_from(&task);
 
     // Match the fallback solver
-    let result = match state.fallback_solver.as_ref() {
-        None => {
-            // If the variant is valid, use solver task
-            variant_result.map(|variant| solver_task(&state.onnx, variant, task))
-        }
-        Some(solver) => {
-            // If the variant is valid, use solver task, else use fallback solver task
-            match variant_result {
-                Ok(variant) => Ok(solver_task(&state.onnx, variant, task)),
-                Err(_) => Ok(fallback_solver_task(solver, task)),
-            }
-        }
-    }?;
-
-    result.await
+    match state.fallback_solver.as_ref() {
+        None => solver_task(&state.onnx, variant_result?, task).await,
+        Some(solver) => match variant_result {
+            Ok(variant) => solver_task(&state.onnx, variant, task).await,
+            Err(_) => fallback_solver_task(solver, task).await,
+        },
+    }
 }
 
 /// Handle the model task
