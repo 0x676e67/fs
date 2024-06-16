@@ -9,12 +9,13 @@ description = "Funcaptcha solver server"
 [dependencies]
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+typed-builder = "0.18"
 base64 = "0.22"
 image = "0.25"
 ndarray = "0.15.6"
 ort = "2.0.0-rc.2"
 rayon = "1.8.1"
-serde_json = "1.0.111"
 sha2 = "0.10.8"
 clap = { version = "4.4.18", features = ["derive", "env"] }
 self_update = { version = "0.40.0", default-features = false, features = ["rustls", "archive-tar", "compression-flate2"]  }

@@ -6,7 +6,7 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use self::solver::Solver;
-use self::task::Task;
+pub use self::task::Task;
 use crate::error::Error;
 use crate::onnx::Variant;
 use crate::onnx::{ONNXConfig, Predictor};
@@ -32,9 +32,9 @@ struct AppState {
     // Submit image limit
     limit: usize,
     // Fallback solver
-    solver: Option<Solver>,
+    fallback_solver: Option<Solver>,
     // ONNX configuration
-    onnx_config: onnx::ONNXConfig,
+    onnx: onnx::ONNXConfig,
 }
 
 #[tokio::main]
@@ -52,21 +52,24 @@ pub async fn run(args: BootArgs) -> Result<()> {
     let state = AppState {
         api_key: args.api_key,
         limit: args.image_limit,
-        solver: match (args.fallback_solver, args.fallback_key) {
-            (Some(solver), Some(key)) => Some(Solver::new(
-                SolverType::from_str(&solver)?,
-                key,
-                args.fallback_endpoint,
-                args.fallback_image_limit,
-            )),
+        fallback_solver: match (args.fallback_solver, args.fallback_key) {
+            (Some(solver), Some(key)) => Some(
+                Solver::builder()
+                    .typed(SolverType::from_str(&solver)?)
+                    .client(reqwest::Client::new())
+                    .client_key(key)
+                    .limit(args.image_limit)
+                    .endpoint(args.fallback_endpoint)
+                    .build(),
+            ),
             _ => None,
         },
-        onnx_config: onnx::ONNXConfig {
-            model_dir: args.model_dir,
-            update_check: args.update_check,
-            num_threads: args.num_threads,
-            allocator: args.allocator,
-        },
+        onnx: ONNXConfig::builder()
+            .model_dir(args.model_dir)
+            .update_check(args.update_check)
+            .num_threads(args.num_threads)
+            .allocator(args.allocator)
+            .build(),
     };
 
     // Create the router.
@@ -110,69 +113,92 @@ pub async fn run(args: BootArgs) -> Result<()> {
 }
 
 /// Handle the task
+/// This function is responsible for handling tasks. It takes the application state and a task as input.
+/// It first validates the task, then tries to convert the task to a variant.
+/// Depending on whether a fallback solver is available, it either uses the solver task or the fallback solver task.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
 async fn task(
-    State(state): State<Arc<AppState>>,
-    Json(task): Json<Task>,
+    State(state): State<Arc<AppState>>, // The application state
+    Json(task): Json<Task>,             // The task to be handled
 ) -> Result<Json<TaskResult>> {
     // Validate the task
     validate_task(&state, &task)?;
 
-    // If the variant is valid, use fallback solver
-    if let Ok(model) = Variant::from_str(task.game_variant_instructions.0.as_str()) {
-        // handle the solver task
-        handle_solver_task(&state.onnx_config, task, model).await
-    } else {
-        // handle the fallback solver task
-        handle_fallback_solver_task(&state, task).await
-    }
+    // Try to convert task to variant
+    let variant_result = Variant::try_from(&task);
+
+    // Match the fallback solver
+    let result = match state.fallback_solver.as_ref() {
+        None => {
+            // If the variant is valid, use solver task
+            variant_result.map(|variant| solver_task(&state.onnx, variant, task))
+        }
+        Some(solver) => {
+            // If the variant is valid, use solver task, else use fallback solver task
+            match variant_result {
+                Ok(variant) => Ok(solver_task(&state.onnx, variant, task)),
+                Err(_) => Ok(fallback_solver_task(solver, task)),
+            }
+        }
+    }?;
+
+    result.await
 }
 
 /// Handle the model task
-async fn handle_solver_task(
-    args: &ONNXConfig,
+/// This function is responsible for handling tasks using the model. It takes the ONNX configuration, a variant, and a task as input.
+/// It first gets the model predictor, then processes the task using the predictor.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
+/// If there is an error during the process, it returns a Result wrapping an error.
+async fn solver_task(
+    config: &ONNXConfig,
+    variant: Variant,
     task: Task,
-    model: Variant,
 ) -> Result<Json<TaskResult>> {
     // Get the model predictor
-    let predictor = onnx::get_predictor(model, args).await?;
+    let predictor = onnx::get_predictor(variant, config).await?;
 
-    // Handle the single or multiple image task
-    let answers = if task.images.len() == 1 {
-        handle_single_image_task(&task.images[0], predictor)?
-    } else {
-        handle_multiple_images_task(task.images, predictor)?
-    };
+    // Process the task
+    let answers = process_image_tasks(task.images, predictor)?;
 
-    let result = TaskResult {
-        error: None,
-        solved: true,
-        objects: Some(answers),
-    };
-    Ok(Json(result))
+    // If the task is successfully processed, return the answers
+    Ok(Json(
+        TaskResult::builder().solved(true).objects(answers).build(),
+    ))
 }
 
-/// Handle the single image task
-fn handle_single_image_task<P: Predictor + ?Sized>(
-    image: &String,
-    predictor: &P,
-) -> Result<Vec<i32>> {
-    let image = decode_image(image)?;
-    let answer = predictor.predict(image)?;
-    Ok(vec![answer])
+/// Handle the fallback solver task
+/// This function is responsible for handling tasks using the fallback solver. It takes a solver and a task as input.
+/// It processes the task using the solver.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
+/// If there is an error during the process, it returns a Result wrapping an error.
+async fn fallback_solver_task(solver: &Solver, task: Task) -> Result<Json<TaskResult>> {
+    // Process the task
+    let answers = solver.process(task).await?;
+
+    // If the task is successfully processed, return the answers
+    Ok(Json(
+        TaskResult::builder().solved(true).objects(answers).build(),
+    ))
 }
 
-/// Handle the multiple images task
-fn handle_multiple_images_task<P: Predictor + ?Sized>(
-    images: Vec<String>,
-    predictor: &P,
+/// Process image tasks
+/// This function is responsible for processing tasks with one or more images. It takes a vector of images and a predictor as input.
+/// It decodes each image, uses the predictor to predict the answer for each image, and collects the answers in a vector.
+/// The function returns a Result wrapping a vector of integers.
+fn process_image_tasks<P: Predictor + ?Sized>(
+    images: Vec<String>, // The images to be processed
+    predictor: &P,       // The predictor to be used
 ) -> Result<Vec<i32>> {
     let mut objects = images
         .into_par_iter()
         .enumerate()
         .map(|(index, image)| {
-            let image = decode_image(&image)?;
-            let answer = predictor.predict(image)?;
-            Ok((index, answer))
+            let image = decode_image(&image)?; // Decode the image
+            let answer = predictor.predict(image)?; // Predict the answer
+            Ok((index, answer)) // Return the answer
         })
         .collect::<Result<Vec<(usize, i32)>>>()?;
 
@@ -180,76 +206,27 @@ fn handle_multiple_images_task<P: Predictor + ?Sized>(
     Ok(objects.into_iter().map(|(_, answer)| answer).collect())
 }
 
-/// Handle the fallback solver task
-async fn handle_fallback_solver_task(
-    state: &Arc<AppState>,
-    task: Task,
-) -> Result<Json<TaskResult>> {
-    // Get the fallback solver
-    let solver = state.solver.as_ref().unwrap();
-    let (game_variant, instructions) = task.game_variant_instructions;
-
-    let mut answers = Vec::with_capacity(task.images.len());
-    match solver.solver() {
-        solver::SolverType::Yescaptcha => {
-            // single image
-            for image in task.images {
-                // submit task
-                let answer = solver
-                    .submit_task(solver::SubmitTask {
-                        image: Some(&image),
-                        images: None,
-                        game_variant_instructions: (&game_variant, &instructions),
-                    })
-                    .await?;
-                answers.extend(answer);
-            }
+/// Validate the task
+/// This function checks if the task is valid. It takes the application state and a task as input.
+/// It first checks if the API key is provided and matches the one in the application state.
+/// Then it checks if the number of images in the task is within the limit.
+/// If any of these checks fail, it returns an error.
+/// If all checks pass, it returns Ok.
+fn validate_task(state: &Arc<AppState>, task: &Task) -> Result<()> {
+    // Check if API key is provided and matches the one in the state
+    match &state.api_key {
+        Some(api_key) if task.api_key.as_deref() != Some(api_key) => {
+            return Err(Error::InvalidApiKey)
         }
-        solver::SolverType::Capsolver => {
-            // split chunk images
-            let images_chunk = task.images.chunks(solver.limit().max(1));
-
-            // submit multiple images task
-            for chunk in images_chunk {
-                // submit task
-                let answer = solver
-                    .submit_task(solver::SubmitTask {
-                        image: None,
-                        images: Some(chunk),
-                        game_variant_instructions: (&game_variant, &instructions),
-                    })
-                    .await?;
-                answers.extend(answer);
-            }
-        }
+        _ => (),
     }
 
-    let result = TaskResult {
-        error: None,
-        solved: true,
-        objects: Some(answers),
-    };
-
-    Ok(Json(result))
-}
-
-/// Validate task
-fn validate_task(state: &Arc<AppState>, task: &Task) -> Result<()> {
-    // If API key is not provided, return error
-    state.api_key.as_deref().map_or(Ok(()), |api_key| {
-        if task.api_key.as_deref() == Some(api_key) {
-            Ok(())
-        } else {
-            Err(Error::InvalidApiKey)
-        }
-    })?;
-
-    // If images is empty, return error
+    // Check if images is empty
     if task.images.is_empty() {
         return Err(Error::InvalidImages);
     }
 
-    // If images is greater than limit, return error
+    // Check if images is greater than limit
     if task.images.len() > state.limit {
         return Err(Error::InvalidSubmitLimit);
     }

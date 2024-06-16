@@ -1,6 +1,6 @@
 use crate::error::Error;
+use crate::serve::Task;
 use crate::Result;
-use std::str::FromStr;
 
 #[derive(Debug)]
 pub enum Variant {
@@ -28,33 +28,36 @@ pub enum Variant {
     LumberLengthGame,
 }
 
-impl FromStr for Variant {
-    type Err = Error;
+impl TryFrom<&Task> for Variant {
+    type Error = Error;
+    fn try_from(task: &Task) -> Result<Self> {
+        let variant = match task.game_variant_instructions.0.as_str() {
+            "3d_rollball_animals" => Variant::M3dRollballAnimals,
+            "3d_rollball_objects" => Variant::M3dRollballObjects,
+            "coordinatesmatch" => Variant::Coordinatesmatch,
+            "hopscotch_highsec" => Variant::HopscotchHighsec,
+            "train_coordinates" => Variant::TrainCoordinates,
+            "penguin" => Variant::Penguin,
+            "shadows" => Variant::Shadows,
+            "BrokenJigsawbrokenjigsaw_swap" => Variant::BrokenJigsawbrokenjigsaw_swap,
+            "frankenhead" => Variant::Frankenhead,
+            "counting" => Variant::Counting,
+            "card" => Variant::Card,
+            "rockstack" => Variant::Rockstack,
+            "cardistance" => Variant::Cardistance,
+            "penguins-icon" => Variant::PenguinsIcon,
+            "knotsCrossesCircle" => Variant::KnotsCrossesCircle,
+            "hand_number_puzzle" => Variant::HandNumberPuzzle,
+            "dicematch" => Variant::Dicematch,
+            "numericalmatch" => Variant::Numericalmatch,
+            "conveyor" => Variant::Conveyor,
+            "unbentobjects" => Variant::Unbentobjects,
+            "lumber-length-game" => Variant::LumberLengthGame,
+            _ => Err(Error::UnknownVariantType(
+                task.game_variant_instructions.0.clone(),
+            ))?,
+        };
 
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "3d_rollball_animals" => Ok(Variant::M3dRollballAnimals),
-            "3d_rollball_objects" => Ok(Variant::M3dRollballObjects),
-            "coordinatesmatch" => Ok(Variant::Coordinatesmatch),
-            "hopscotch_highsec" => Ok(Variant::HopscotchHighsec),
-            "train_coordinates" => Ok(Variant::TrainCoordinates),
-            "penguin" => Ok(Variant::Penguin),
-            "shadows" => Ok(Variant::Shadows),
-            "BrokenJigsawbrokenjigsaw_swap" => Ok(Variant::BrokenJigsawbrokenjigsaw_swap),
-            "frankenhead" => Ok(Variant::Frankenhead),
-            "counting" => Ok(Variant::Counting),
-            "card" => Ok(Variant::Card),
-            "rockstack" => Ok(Variant::Rockstack),
-            "cardistance" => Ok(Variant::Cardistance),
-            "penguins-icon" => Ok(Variant::PenguinsIcon),
-            "knotsCrossesCircle" => Ok(Variant::KnotsCrossesCircle),
-            "hand_number_puzzle" => Ok(Variant::HandNumberPuzzle),
-            "dicematch" => Ok(Variant::Dicematch),
-            "numericalmatch" => Ok(Variant::Numericalmatch),
-            "conveyor" => Ok(Variant::Conveyor),
-            "unbentobjects" => Ok(Variant::Unbentobjects),
-            "lumber-length-game" => Ok(Variant::LumberLengthGame),
-            _ => Err(Error::UnknownVariantType(s.to_string())),
-        }
+        Ok(variant)
     }
 }

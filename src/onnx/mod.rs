@@ -43,11 +43,12 @@ static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
 static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
 static LUMBER_LENGTH_GAME_PREDICTOR: OnceCell<LumberLengthGamePredictor> = OnceCell::const_new();
 
+#[derive(typed_builder::TypedBuilder)]
 pub struct ONNXConfig {
-    pub model_dir: Option<PathBuf>,
-    pub update_check: bool,
-    pub num_threads: u16,
-    pub allocator: ort::AllocatorType,
+    model_dir: Option<PathBuf>,
+    update_check: bool,
+    num_threads: u16,
+    allocator: ort::AllocatorType,
 }
 
 impl Default for ONNXConfig {

@@ -67,15 +67,16 @@ impl IntoResponse for Error {
             Error::IoError(_)
             | Error::SerdeJsonError(_)
             | Error::OnnxError(_)
+            | Error::InvalidModelName(_)
             | Error::ReqwestError(_)
             | Error::FallbackSolverError(_) => StatusCode::INTERNAL_SERVER_ERROR,
+
             Error::InvalidSubmitLimit
             | Error::InvalidApiKey
             | Error::InvalidImages
             | Error::ImageDecodeError(_)
             | Error::InvalidAllocator(_)
             | Error::InvalidSolverType(_)
-            | Error::InvalidModelName(_)
             | Error::UnknownVariantType(_)
             | Error::InvalidImageSize(_)
             | Error::ShapeError(_)
@@ -86,11 +87,12 @@ impl IntoResponse for Error {
 
         (
             status,
-            Json(TaskResult {
-                error: Some(self.to_string()),
-                solved: false,
-                objects: None,
-            }),
+            Json(
+                TaskResult::builder()
+                    .error(self.to_string())
+                    .solved(false)
+                    .build(),
+            ),
         )
             .into_response()
     }
