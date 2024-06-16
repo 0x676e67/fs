@@ -17,6 +17,16 @@ ArkoseLabs funcaptcha challenge solver server
 - If you are willing to provide more types of images to help me train the model, please contact me: <gngppz@gmail.com>
 - Please provide the corresponding array index answer for the image dataset
 
+### Features
+
+`Option execution provider`
+
+- CPU (default)
+- CUDA
+- ROCM
+- CoreML (Apple)
+- DirectML (Windows)
+
 ### Supported challenges
 
 variants: `3d_rollball_animals`, `3d_rollball_objects`, `hopscotch_highsec`, `coordinatesmatch`, `train_coordinates`, `BrokenJigsawbrokenjigsaw_swap`, `shadows`, `penguins`, `frankenhead`, `counting`, `knotsCrossesCircle`, `hand_number_puzzle`, `card`, `rockstack`, `cardistance`, `penguins-icon`, `conveyor`, `unbentobjects`, `3d_rollball_animals_multi`, `dice_pair`, `lumber-length-game`, `numericalmatch`, `dicematch`
