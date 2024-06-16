@@ -1,8 +1,8 @@
 # fc
 
-Funcaptcha challenge solver server
+ArkoseLabs funcaptcha challenge solver server
 
-- If you are willing to provide more types of images to help me train the model, please contact me: gngppz@gmail.com
+- If you are willing to provide more types of images to help me train the model, please contact me: <gngppz@gmail.com>
 
 ### Supported challenges
 
@@ -31,6 +31,10 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--model-dir`, Funcaptcha model directory
 - `--num-threads`, Number of threads (ONNX Runtime), default 1
 - `--allocator`, Execution provider allocator e.g. device, arena (ONNX Runtime), default device
+- `--fallback-solver`, Fallback solver, supported: "yescaptcha / capsolver", default yescaptcha
+- `--fallback-key`, Fallback solver client key
+- `--fallback-endpoint`, Fallback solver endpoint
+- `--fallback-image-limit`, Fallback image limit, default 1
 
 ```shell
 $ fc -h
@@ -86,7 +90,7 @@ Options:
   -E, --fallback-endpoint <FALLBACK_ENDPOINT>
           Fallback solver endpoint
   -D, --fallback-image-limit <FALLBACK_IMAGE_LIMIT>
-          Fallback image limit [default: 1]
+          Fallback solver image limit [default: 1]
   -h, --help
           Print help
 ```
