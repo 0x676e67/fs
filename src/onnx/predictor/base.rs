@@ -151,7 +151,6 @@ async fn initialize_model(
     model_dir: PathBuf,
     update_check: bool,
 ) -> Result<String> {
-
     // Create model directory if it does not exist
     if !model_dir.exists() {
         tracing::info!("creating model directory: {}", model_dir.display());
