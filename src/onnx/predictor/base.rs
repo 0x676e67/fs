@@ -1,10 +1,15 @@
 use crate::Result;
 use image::DynamicImage;
 use ndarray::Array4;
-use ort::{
-    CUDAExecutionProvider, CoreMLExecutionProvider, DirectMLExecutionProvider, MemoryInfo,
-    ROCmExecutionProvider,
-};
+#[cfg(feature = "cuda")]
+use ort::CUDAExecutionProvider;
+#[cfg(feature = "coreml")]
+use ort::CoreMLExecutionProvider;
+#[cfg(feature = "directml")]
+use ort::DirectMLExecutionProvider;
+use ort::MemoryInfo;
+#[cfg(feature = "rocm")]
+use ort::ROCmExecutionProvider;
 use ort::{GraphOptimizationLevel, Session};
 use sha2::Digest;
 use sha2::Sha256;
@@ -139,12 +144,16 @@ async fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result
         .with_intra_threads(config.num_threads as usize)?
         .with_execution_providers([
             // Prefer TensorRT over CUDA.
+            #[cfg(feature = "cuda")]
             CUDAExecutionProvider::default().build(),
             // Use DirectML on Windows if NVIDIA EPs are not available
+            #[cfg(feature = "directml")]
             DirectMLExecutionProvider::default().build(),
             // Or use ANE on Apple platforms
+            #[cfg(feature = "coreml")]
             CoreMLExecutionProvider::default().build(),
             // Or use rocm on AMD platforms
+            #[cfg(feature = "rocm")]
             ROCmExecutionProvider::default().build(),
         ])?
         .with_allocator(MemoryInfo::new_cpu(
