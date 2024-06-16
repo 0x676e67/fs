@@ -12,7 +12,7 @@ use predictor::{
     hand_number_puzzle::HandNumberPuzzlePredictor, hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
     lumber_length_game::LumberLengthGamePredictor, m3d_rollball_objects::M3DRotationPredictor,
-    numericalmatch::NumericalmatchPredictor, penguin::PenguinPredictor,
+    numericalmatch::NumericalmatchPredictor, penguins::PenguinsPredictor,
     penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor, shadows::ShadowsPredictor,
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
@@ -24,7 +24,7 @@ static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_
 static COORDINATES_MATCH_PREDICTOR: OnceCell<CoordinatesMatchPredictor> = OnceCell::const_new();
 static HOPSCOTCH_HIGHSEC_PREDICTOR: OnceCell<HopscotchHighsecPredictor> = OnceCell::const_new();
 static TRAIN_COORDINATES_PREDICTOR: OnceCell<TrainCoordinatesPredictor> = OnceCell::const_new();
-static PENGUIN_PREDICTOR: OnceCell<PenguinPredictor> = OnceCell::const_new();
+static PENGUIN_PREDICTOR: OnceCell<PenguinsPredictor> = OnceCell::const_new();
 static SHADOWS_PREDICTOR: OnceCell<ShadowsPredictor> = OnceCell::const_new();
 static BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL: OnceCell<BrokenJigsawbrokenjigsaw_swap> =
     OnceCell::const_new();
@@ -113,8 +113,8 @@ pub async fn get_predictor(
             })
             .await
         }
-        Variant::Penguin => {
-            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinPredictor::new(config)).await
+        Variant::Penguins => {
+            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinsPredictor::new(config)).await
         }
         Variant::Shadows => {
             get_predictor_from_cell(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(config)).await

@@ -14,7 +14,7 @@ pub mod knots_crosses_circle;
 pub mod lumber_length_game;
 pub mod m3d_rollball_objects;
 pub mod numericalmatch;
-pub mod penguin;
+pub mod penguins;
 pub mod penguins_icon;
 pub mod rockstack;
 pub mod shadows;

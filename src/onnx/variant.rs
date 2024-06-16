@@ -9,7 +9,7 @@ pub enum Variant {
     Coordinatesmatch,
     HopscotchHighsec,
     TrainCoordinates,
-    Penguin,
+    Penguins,
     Shadows,
     #[allow(non_camel_case_types)]
     BrokenJigsawbrokenjigsaw_swap,
@@ -37,7 +37,7 @@ impl TryFrom<&Task> for Variant {
             "coordinatesmatch" => Variant::Coordinatesmatch,
             "hopscotch_highsec" => Variant::HopscotchHighsec,
             "train_coordinates" => Variant::TrainCoordinates,
-            "penguin" => Variant::Penguin,
+            "penguins" => Variant::Penguins,
             "shadows" => Variant::Shadows,
             "BrokenJigsawbrokenjigsaw_swap" => Variant::BrokenJigsawbrokenjigsaw_swap,
             "frankenhead" => Variant::Frankenhead,
