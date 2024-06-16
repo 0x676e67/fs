@@ -8,11 +8,11 @@ use std::{
 };
 
 #[cfg(target_family = "unix")]
-const PID_PATH: &str = "/var/run/fcsrv.pid";
+const PID_PATH: &str = "/var/run/fc.pid";
 #[cfg(target_family = "unix")]
-const DEFAULT_STDOUT_PATH: &str = "/var/run/fcsrv.out";
+const DEFAULT_STDOUT_PATH: &str = "/var/run/fc.out";
 #[cfg(target_family = "unix")]
-const DEFAULT_STDERR_PATH: &str = "/var/run/fcsrv.err";
+const DEFAULT_STDERR_PATH: &str = "/var/run/fc.err";
 
 /// Get the pid of the daemon
 #[cfg(target_family = "unix")]
@@ -44,7 +44,7 @@ pub fn start(args: BootArgs) -> Result<()> {
     use crate::homedir::setting_dir;
 
     if let Some(pid) = get_pid() {
-        println!("fcsrv is already running with pid: {}", pid);
+        println!("fc is already running with pid: {}", pid);
         return Ok(());
     }
 
@@ -140,7 +140,7 @@ pub fn status() -> Result<()> {
                 (process.1.memory() as f64) / 1024.0 / 1024.0
             );
         }
-        None => println!("fcsrv is not running"),
+        None => println!("fc is not running"),
     }
     Ok(())
 }

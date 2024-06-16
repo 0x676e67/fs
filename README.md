@@ -1,4 +1,4 @@
-# fcsrv
+# fc
 
 Funcaptcha challenge solver server
 
@@ -32,10 +32,10 @@ Funcaptcha challenge solver server
 
 #### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
 
-[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv)
+[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc)
 
-[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), among others.
-For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fcsrv), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), among others.
+For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
 
 ### Usage
 
@@ -53,11 +53,11 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--allocator`, Execution provider allocator e.g. device, arena (ONNX Runtime), default device
 
 ```shell
-$ fcsrv -h
+$ fc -h
 Funcaptcha solver server
 
-Usage: fcsrv
-       fcsrv <COMMAND>
+Usage: fc
+       fc <COMMAND>
 
 Commands:
   run      Run server
@@ -73,10 +73,10 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
-$ fcsrv run -h
+$ fc run -h
 Run server
 
-Usage: fcsrv run [OPTIONS]
+Usage: fc run [OPTIONS]
 
 Options:
   -d, --debug
@@ -116,38 +116,38 @@ Options:
 Run on docker
 
 ```shell
-docker run --rm -it -p 8000:8000 --name=fcsrv \
+docker run --rm -it -p 8000:8000 --name=fc \
   -v $(pwd)/models:/models \
-  ghcr.io/0x676e67/fcsrv:latest run --model-dir /models
+  ghcr.io/0x676e67/fc:latest run --model-dir /models
 ```
 
 Run on Ubuntu/Debian
 
 ```shell
-wget https://github.com/0x676e67/fcsrv/releases/download/v0.2.1/fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
-tar -xf fcsrv-0.2.1-x86_64-unknown-linux-gnu.tar.gz
-mv ./fcsrv /bin/fcsrv
+wget https://github.com/0x676e67/fc/releases/download/v0.2.1/fc-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xf fc-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+mv ./fc /bin/fc
 
 # Update the application
-fcsrv update
+fc update
 
 # Run server
-fcsrv run
+fc run
 
 # Start server daemon
-fcsrv start
+fc start
 
 # Restart server daemon
-fcsrv restart
+fc restart
 
 # Stop server daemon
-fcsrv stop
+fc stop
 
 # Show the server daemon process
-fcsrv ps
+fc ps
 
 # Show the server daemon log
-fcsrv log
+fc log
 ```
 
 - Request
@@ -189,18 +189,18 @@ curl --location 'http://127.0.0.1:8000/task' \
 - Linux compile, Ubuntu machine for example:
 
 ```shell
-git clone https://github.com/0x676e67/fcsrv.git && cd fcsrv
+git clone https://github.com/0x676e67/fc.git && cd fc
 cargo build --release
 ```
 
 ### Contributing
 
-If you would like to submit your contribution, please open a [Pull Request](https://github.com/0x676e67/fcsrv/pulls).
+If you would like to submit your contribution, please open a [Pull Request](https://github.com/0x676e67/fc/pulls).
 
 ### Getting help
 
-Your question might already be answered on the [issues](https://github.com/0x676e67/fcsrv/issues)
+Your question might already be answered on the [issues](https://github.com/0x676e67/fc/issues)
 
 ### License
 
-**fcsrv** © [0x676e67](https://github.com/0x676e67), Released under the [MIT](./LICENSE) License.
+**fc** © [0x676e67](https://github.com/0x676e67), Released under the [MIT](./LICENSE) License.

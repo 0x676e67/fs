@@ -1,9 +1,9 @@
-use fcsrv::onnx::Variant;
+use fc::onnx::Variant;
 
 #[tokio::main]
 async fn main() {
     let args = Default::default();
-    let predictor = fcsrv::onnx::get_predictor(Variant::PenguinsIcon, &args)
+    let predictor = fc::onnx::get_predictor(Variant::PenguinsIcon, &args)
         .await
         .unwrap();
 

@@ -1,5 +1,5 @@
 use clap::Parser;
-use fcsrv::{daemon, update, Commands, Opt};
+use fc::{daemon, update, Commands, Opt};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::parse();

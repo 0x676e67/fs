@@ -1,10 +1,10 @@
-use fcsrv::onnx::Variant;
+use fc::onnx::Variant;
 
 #[tokio::main]
 async fn main() {
     let args = Default::default();
 
-    let predictor = fcsrv::onnx::get_predictor(Variant::BrokenJigsawbrokenjigsaw_swap, &args)
+    let predictor = fc::onnx::get_predictor(Variant::BrokenJigsawbrokenjigsaw_swap, &args)
         .await
         .unwrap();
 

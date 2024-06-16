@@ -1,5 +1,5 @@
 [package]
-name = "fcsrv"
+name = "fc"
 version = "0.2.1"
 edition = "2021"
 description = "Funcaptcha solver server"
