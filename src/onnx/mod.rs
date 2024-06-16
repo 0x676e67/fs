@@ -12,9 +12,11 @@ use predictor::{
     frankenhead::FrankenheadPredictor, hand_number_puzzle::HandNumberPuzzlePredictor,
     hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
-    lumber_length_game::LumberLengthGamePredictor, m3d_rollball_objects::M3DRotationPredictor,
-    numericalmatch::NumericalmatchPredictor, penguins::PenguinsPredictor,
-    penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor, shadows::ShadowsPredictor,
+    lumber_length_game::LumberLengthGamePredictor,
+    m3d_rollball_animals_multi::M3DRotationMultiPredictor,
+    m3d_rollball_objects::M3DRotationPredictor, numericalmatch::NumericalmatchPredictor,
+    penguins::PenguinsPredictor, penguins_icon::PenguinsIconPredictor,
+    rockstack::RockstackPredictor, shadows::ShadowsPredictor,
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
 use std::{future::Future, path::PathBuf};
@@ -44,6 +46,7 @@ static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
 static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
 static LUMBER_LENGTH_GAME_PREDICTOR: OnceCell<LumberLengthGamePredictor> = OnceCell::const_new();
 static DICE_PAIR_PREDICTOR: OnceCell<DicePairPredictor> = OnceCell::const_new();
+static M3D_ROLLBALL_MULTI_PREDICTOR: OnceCell<M3DRotationMultiPredictor> = OnceCell::const_new();
 
 #[derive(typed_builder::TypedBuilder)]
 pub struct ONNXConfig {
@@ -70,6 +73,12 @@ pub async fn get_predictor(
     config: &ONNXConfig,
 ) -> Result<&'static dyn Predictor> {
     match variant {
+        Variant::M3dRollballAnimalsMulti => {
+            get_predictor_from_cell(&M3D_ROLLBALL_MULTI_PREDICTOR, || {
+                M3DRotationMultiPredictor::new(config)
+            })
+            .await
+        }
         Variant::DicePair => {
             get_predictor_from_cell(&DICE_PAIR_PREDICTOR, || DicePairPredictor::new(config)).await
         }

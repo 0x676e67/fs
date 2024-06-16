@@ -6,6 +6,7 @@ use crate::Result;
 pub enum Variant {
     M3dRollballAnimals,
     M3dRollballObjects,
+    M3dRollballAnimalsMulti,
     Coordinatesmatch,
     HopscotchHighsec,
     TrainCoordinates,
@@ -55,6 +56,7 @@ impl TryFrom<&Task> for Variant {
             "unbentobjects" => Variant::Unbentobjects,
             "lumber-length-game" => Variant::LumberLengthGame,
             "dice_pair" => Variant::DicePair,
+            "3d_rollball_animals_multi" => Variant::M3dRollballAnimalsMulti,
             _ => Err(Error::UnknownVariantType(
                 task.game_variant_instructions.0.clone(),
             ))?,
