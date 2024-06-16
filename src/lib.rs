@@ -1,15 +1,18 @@
 pub mod alloc;
 #[cfg(target_family = "unix")]
 pub mod daemon;
+pub mod error;
 pub mod homedir;
 pub mod model;
 pub mod serve;
 pub mod update;
 
-use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
+use error::Error;
 pub use homedir::setting_dir;
 use std::{net::SocketAddr, path::PathBuf};
+
+type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
@@ -101,10 +104,10 @@ pub struct BootArgs {
     pub fallback_image_limit: usize,
 }
 
-fn alloc_parser(s: &str) -> anyhow::Result<ort::AllocatorType> {
+fn alloc_parser(s: &str) -> Result<ort::AllocatorType> {
     match s {
         "device" => Ok(ort::AllocatorType::Device),
         "arena" => Ok(ort::AllocatorType::Arena),
-        _ => Err(anyhow::anyhow!("Invalid allocator type")),
+        _ => Err(Error::InvalidAllocator(s.to_string())),
     }
 }

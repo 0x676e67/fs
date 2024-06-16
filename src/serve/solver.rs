@@ -29,6 +29,7 @@ impl FromStr for SolverType {
     }
 }
 
+#[derive(Clone)]
 pub struct Solver {
     typed: SolverType,
     client: reqwest::Client,

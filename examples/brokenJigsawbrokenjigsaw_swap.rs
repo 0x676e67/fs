@@ -1,4 +1,4 @@
-use fcsrv::{model::ModelType, BootArgs};
+use fcsrv::{model::TypedChallenge, BootArgs};
 use ort::AllocatorType;
 use std::path::PathBuf;
 
@@ -21,9 +21,10 @@ async fn main() {
         fallback_endpoint: None,
     };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::BrokenJigsawbrokenjigsaw_swap, &args)
-        .await
-        .unwrap();
+    let predictor =
+        fcsrv::model::get_predictor(TypedChallenge::BrokenJigsawbrokenjigsaw_swap, &args)
+            .await
+            .unwrap();
 
     let image_file = std::fs::read(
         "images/BrokenJigsawbrokenjigsaw_swap/1_0763dbd0d732075bba1fda9da7046f10.jpg",

@@ -1,4 +1,4 @@
-use fcsrv::{model::ModelType, BootArgs};
+use fcsrv::{model::TypedChallenge, BootArgs};
 use ort::AllocatorType;
 use std::path::PathBuf;
 
@@ -21,7 +21,7 @@ async fn main() {
         fallback_endpoint: None,
     };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::Frankenhead, &args)
+    let predictor = fcsrv::model::get_predictor(TypedChallenge::Frankenhead, &args)
         .await
         .unwrap();
 

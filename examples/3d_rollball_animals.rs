@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use fcsrv::{model::ModelType, BootArgs};
+use fcsrv::{model::TypedChallenge, BootArgs};
 use ort::AllocatorType;
 
 #[tokio::main]
@@ -22,7 +22,7 @@ async fn main() {
         fallback_endpoint: None,
     };
 
-    let predictor = fcsrv::model::get_predictor(ModelType::M3dRollballAnimals, &args)
+    let predictor = fcsrv::model::get_predictor(TypedChallenge::M3dRollballAnimals, &args)
         .await
         .unwrap();
 

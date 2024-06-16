@@ -74,107 +74,105 @@ pub trait Predictor: Send + Sync {
 
 /// Get the model predictor for the given model type
 pub async fn get_predictor(
-    model_type: ModelType,
+    model_type: TypedChallenge,
     args: &BootArgs,
 ) -> Result<&'static dyn Predictor> {
-    let predictor = match model_type {
-        ModelType::LumberLengthGame => {
+    match model_type {
+        TypedChallenge::LumberLengthGame => {
             get_predictor_from_cell(&LUMBER_LENGTH_GAME_PREDICTOR, || {
                 LumberLengthGamePredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::Unbentobjects => {
+        TypedChallenge::Unbentobjects => {
             get_predictor_from_cell(&UNBENTOBJECTS_PREDICTOR, || {
                 UnbentobjectsPredictor::new(args)
             })
-            .await?
+            .await
         }
-
-        ModelType::Conveyor => {
-            get_predictor_from_cell(&CONVEYOR_PREDICTOR, || ConveyorPredictor::new(args)).await?
+        TypedChallenge::Conveyor => {
+            get_predictor_from_cell(&CONVEYOR_PREDICTOR, || ConveyorPredictor::new(args)).await
         }
-        ModelType::Numericalmatch => {
+        TypedChallenge::Numericalmatch => {
             get_predictor_from_cell(&NUMERICALMATCH_PREDICTOR, || {
                 NumericalmatchPredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::M3dRollballAnimals | ModelType::M3dRollballObjects => {
+        TypedChallenge::M3dRollballAnimals | TypedChallenge::M3dRollballObjects => {
             get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR, || M3DRotationPredictor::new(args))
-                .await?
+                .await
         }
-        ModelType::Coordinatesmatch => {
+        TypedChallenge::Coordinatesmatch => {
             get_predictor_from_cell(&COORDINATES_MATCH_PREDICTOR, || {
                 CoordinatesMatchPredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::HopscotchHighsec => {
+        TypedChallenge::HopscotchHighsec => {
             get_predictor_from_cell(&HOPSCOTCH_HIGHSEC_PREDICTOR, || {
                 HopscotchHighsecPredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::TrainCoordinates => {
+        TypedChallenge::TrainCoordinates => {
             get_predictor_from_cell(&TRAIN_COORDINATES_PREDICTOR, || {
                 TrainCoordinatesPredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::Penguin => {
-            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinPredictor::new(args)).await?
+        TypedChallenge::Penguin => {
+            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinPredictor::new(args)).await
         }
-        ModelType::Shadows => {
-            get_predictor_from_cell(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(args)).await?
+        TypedChallenge::Shadows => {
+            get_predictor_from_cell(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(args)).await
         }
-        ModelType::BrokenJigsawbrokenjigsaw_swap => {
+        TypedChallenge::BrokenJigsawbrokenjigsaw_swap => {
             get_predictor_from_cell(&BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL, || {
                 BrokenJigsawbrokenjigsaw_swap::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::Frankenhead => {
+        TypedChallenge::Frankenhead => {
             get_predictor_from_cell(&FRANKENHEAD_PREDICTOR, || FrankenheadPredictor::new(args))
-                .await?
+                .await
         }
-        ModelType::Counting => {
-            get_predictor_from_cell(&COUNTING_PREDICTOR, || CountingPredictor::new(args)).await?
+        TypedChallenge::Counting => {
+            get_predictor_from_cell(&COUNTING_PREDICTOR, || CountingPredictor::new(args)).await
         }
-        ModelType::Card => {
-            get_predictor_from_cell(&CARD_PREDICTOR, || CardPredictor::new(args)).await?
+        TypedChallenge::Card => {
+            get_predictor_from_cell(&CARD_PREDICTOR, || CardPredictor::new(args)).await
         }
-        ModelType::Rockstack => {
-            get_predictor_from_cell(&ROCKSTACK_PREDICTOR, || RockstackPredictor::new(args)).await?
+        TypedChallenge::Rockstack => {
+            get_predictor_from_cell(&ROCKSTACK_PREDICTOR, || RockstackPredictor::new(args)).await
         }
-        ModelType::Cardistance => {
+        TypedChallenge::Cardistance => {
             get_predictor_from_cell(&CARDISTANCE_PREDICTOR, || CardistancePredictor::new(args))
-                .await?
+                .await
         }
-        ModelType::PenguinsIcon => {
+        TypedChallenge::PenguinsIcon => {
             get_predictor_from_cell(&PENGUINS_ICON_PREDICTOR, || {
                 PenguinsIconPredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::KnotsCrossesCircle => {
+        TypedChallenge::KnotsCrossesCircle => {
             get_predictor_from_cell(&KNOTS_CROSSES_CIRCLE_PREDICTOR, || {
                 KnotsCrossesCirclePredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::HandNumberPuzzle => {
+        TypedChallenge::HandNumberPuzzle => {
             get_predictor_from_cell(&HAND_NUMBER_PUZZLE_PREDICTOR, || {
                 HandNumberPuzzlePredictor::new(args)
             })
-            .await?
+            .await
         }
-        ModelType::Dicematch => {
+        TypedChallenge::Dicematch => {
             get_predictor_from_cell(&DICEMATCH_PREDICTOR, || DicematchMatchPredictor::new(args))
-                .await?
+                .await
         }
-    };
-    Ok(predictor)
+    }
 }
 
 async fn get_predictor_from_cell<P, F>(
@@ -189,7 +187,7 @@ where
 }
 
 #[derive(Debug)]
-pub enum ModelType {
+pub enum TypedChallenge {
     M3dRollballAnimals,
     M3dRollballObjects,
     Coordinatesmatch,
@@ -214,32 +212,32 @@ pub enum ModelType {
     LumberLengthGame,
 }
 
-impl FromStr for ModelType {
+impl FromStr for TypedChallenge {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
-            "3d_rollball_animals" => Ok(ModelType::M3dRollballAnimals),
-            "3d_rollball_objects" => Ok(ModelType::M3dRollballObjects),
-            "coordinatesmatch" => Ok(ModelType::Coordinatesmatch),
-            "hopscotch_highsec" => Ok(ModelType::HopscotchHighsec),
-            "train_coordinates" => Ok(ModelType::TrainCoordinates),
-            "penguin" => Ok(ModelType::Penguin),
-            "shadows" => Ok(ModelType::Shadows),
-            "BrokenJigsawbrokenjigsaw_swap" => Ok(ModelType::BrokenJigsawbrokenjigsaw_swap),
-            "frankenhead" => Ok(ModelType::Frankenhead),
-            "counting" => Ok(ModelType::Counting),
-            "card" => Ok(ModelType::Card),
-            "rockstack" => Ok(ModelType::Rockstack),
-            "cardistance" => Ok(ModelType::Cardistance),
-            "penguins-icon" => Ok(ModelType::PenguinsIcon),
-            "knotsCrossesCircle" => Ok(ModelType::KnotsCrossesCircle),
-            "hand_number_puzzle" => Ok(ModelType::HandNumberPuzzle),
-            "dicematch" => Ok(ModelType::Dicematch),
-            "numericalmatch" => Ok(ModelType::Numericalmatch),
-            "conveyor" => Ok(ModelType::Conveyor),
-            "unbentobjects" => Ok(ModelType::Unbentobjects),
-            "lumber-length-game" => Ok(ModelType::LumberLengthGame),
+            "3d_rollball_animals" => Ok(TypedChallenge::M3dRollballAnimals),
+            "3d_rollball_objects" => Ok(TypedChallenge::M3dRollballObjects),
+            "coordinatesmatch" => Ok(TypedChallenge::Coordinatesmatch),
+            "hopscotch_highsec" => Ok(TypedChallenge::HopscotchHighsec),
+            "train_coordinates" => Ok(TypedChallenge::TrainCoordinates),
+            "penguin" => Ok(TypedChallenge::Penguin),
+            "shadows" => Ok(TypedChallenge::Shadows),
+            "BrokenJigsawbrokenjigsaw_swap" => Ok(TypedChallenge::BrokenJigsawbrokenjigsaw_swap),
+            "frankenhead" => Ok(TypedChallenge::Frankenhead),
+            "counting" => Ok(TypedChallenge::Counting),
+            "card" => Ok(TypedChallenge::Card),
+            "rockstack" => Ok(TypedChallenge::Rockstack),
+            "cardistance" => Ok(TypedChallenge::Cardistance),
+            "penguins-icon" => Ok(TypedChallenge::PenguinsIcon),
+            "knotsCrossesCircle" => Ok(TypedChallenge::KnotsCrossesCircle),
+            "hand_number_puzzle" => Ok(TypedChallenge::HandNumberPuzzle),
+            "dicematch" => Ok(TypedChallenge::Dicematch),
+            "numericalmatch" => Ok(TypedChallenge::Numericalmatch),
+            "conveyor" => Ok(TypedChallenge::Conveyor),
+            "unbentobjects" => Ok(TypedChallenge::Unbentobjects),
+            "lumber-length-game" => Ok(TypedChallenge::LumberLengthGame),
             // fallback to M3dRollballObjects
             _ => Err(anyhow::anyhow!("unknown model type")),
         }

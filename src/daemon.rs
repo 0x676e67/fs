@@ -1,21 +1,18 @@
-use anyhow::Result;
+use crate::Result;
+use crate::{serve, BootArgs};
+use daemonize::Daemonize;
 use std::{
     fs::{File, Permissions},
     os::unix::fs::PermissionsExt,
     path::Path,
 };
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-use daemonize::Daemonize;
-
-use crate::{serve::Serve, BootArgs};
 
 #[cfg(target_family = "unix")]
-pub(crate) const PID_PATH: &str = "/var/run/fcsrv.pid";
+const PID_PATH: &str = "/var/run/fcsrv.pid";
 #[cfg(target_family = "unix")]
-pub(crate) const DEFAULT_STDOUT_PATH: &str = "/var/run/fcsrv.out";
+const DEFAULT_STDOUT_PATH: &str = "/var/run/fcsrv.out";
 #[cfg(target_family = "unix")]
-pub(crate) const DEFAULT_STDERR_PATH: &str = "/var/run/fcsrv.err";
+const DEFAULT_STDERR_PATH: &str = "/var/run/fcsrv.err";
 
 /// Get the pid of the daemon
 #[cfg(target_family = "unix")]
@@ -36,21 +33,9 @@ pub fn check_root() {
     }
 }
 
+/// Run the server
 pub fn run(args: BootArgs) -> Result<()> {
-    if args.debug {
-        std::env::set_var("RUST_LOG", "debug");
-    } else {
-        std::env::set_var("RUST_LOG", "info");
-    }
-    // Init tracing
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "RUST_LOG=info".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
-    Serve::new(args).run()
+    serve::run(args)
 }
 
 /// Start the daemon

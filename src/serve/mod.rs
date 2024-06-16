@@ -1,115 +1,122 @@
+mod signal;
 mod solver;
 mod task;
 
-use std::convert::Infallible;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use self::solver::Solver;
 use self::task::{Task, TaskResult};
-use crate::model::{ModelType, Predictor};
+use crate::error::Error;
+use crate::model::{Predictor, TypedChallenge};
 use crate::serve::solver::SolverType;
+use crate::Result;
 use crate::{model, BootArgs};
-use anyhow::Result;
+use axum::extract::State;
+use axum::response::{Html, IntoResponse};
+use axum::routing::post;
+use axum::{Json, Router};
+use axum_server::tls_rustls::RustlsConfig;
+use axum_server::Handle;
 use image::DynamicImage;
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
-use reqwest::StatusCode;
-use tokio::sync::OnceCell;
-use warp::filters::body::BodyDeserializeError;
-use warp::reject::{Reject, Rejection};
-use warp::reply::{Json, Reply};
-use warp::Filter;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
-static ARGS: OnceCell<BootArgs> = OnceCell::const_new();
-static API_KEY: OnceCell<Option<String>> = OnceCell::const_new();
-static SUBMIT_LIMIT: OnceCell<Option<usize>> = OnceCell::const_new();
-static SOLVER: OnceCell<Solver> = OnceCell::const_new();
+/// Application state
+#[derive(Clone)]
+struct AppState {
+    args: BootArgs,
+    // API key
+    api_key: Option<String>,
+    // Submit image limit
+    limit: usize,
+    // Fallback solver
+    solver: Option<Solver>,
+}
 
-pub struct Serve(BootArgs);
+#[tokio::main]
+pub async fn run(args: BootArgs) -> Result<()> {
+    // Initialize the logger.
+    tracing_subscriber::fmt()
+        .with_max_level(if args.debug {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
+        .init();
 
-impl Serve {
-    pub fn new(args: BootArgs) -> Self {
-        Self(args)
-    }
-
-    #[tokio::main]
-    pub async fn run(self) -> Result<()> {
-        // Init args
-        ARGS.set(self.0.clone())?;
-
-        // Init API key
-        API_KEY.set(self.0.api_key)?;
-
-        // Init submit limit
-        SUBMIT_LIMIT.set(Some(self.0.multi_image_limit))?;
-
-        // Init fallback solver
-        if let (Some(solver), Some(key)) = (self.0.fallback_solver, self.0.fallback_key) {
-            let _ = SOLVER.set(Solver::new(
+    // Initialize the application state.
+    let state = AppState {
+        args: args.clone(),
+        api_key: args.api_key,
+        limit: args.multi_image_limit,
+        solver: match (args.fallback_solver, args.fallback_key) {
+            (Some(solver), Some(key)) => Some(Solver::new(
                 SolverType::from_str(&solver)?,
                 key,
-                self.0.fallback_endpoint,
-                self.0.fallback_image_limit,
-            ));
+                args.fallback_endpoint,
+                args.fallback_image_limit,
+            )),
+            _ => None,
+        },
+    };
+
+    // Create the router.
+    let route = Router::new()
+        .route("/task", post(task))
+        .fallback(handler_404)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::default().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO))
+                .on_failure(DefaultOnFailure::new().level(Level::WARN)),
+        )
+        .with_state(Arc::new(state));
+
+    tracing::info!("Listening on {}", args.bind);
+
+    // Signal the server to shut down using Handle.
+    let handle = Handle::new();
+
+    // Spawn a task to gracefully shutdown server.
+    tokio::spawn(signal::graceful_shutdown(handle.clone()));
+
+    // If TLS certificate and key are provided, use them.
+    match (args.tls_cert, args.tls_key) {
+        (Some(cert), Some(key)) => {
+            let config = RustlsConfig::from_pem_file(cert, key).await?;
+            axum_server::bind_rustls(args.bind, config)
+                .handle(handle)
+                .serve(route.into_make_service())
+                .await?;
         }
-
-        // Init routes
-        let routes = warp::path("task")
-            .and(warp::post())
-            .and(warp::body::json())
-            .and_then(handle_task)
-            .recover(handle_rejection)
-            .with(warp::trace::request());
-
-        tracing::info!("Listening on {}", self.0.bind);
-
-        // Start the server
-        match (self.0.tls_cert, self.0.tls_key) {
-            (Some(cert), Some(key)) => {
-                warp::serve(routes)
-                    .tls()
-                    .cert_path(cert)
-                    .key_path(key)
-                    .bind_with_graceful_shutdown(self.0.bind, async {
-                        tokio::signal::ctrl_c()
-                            .await
-                            .expect("failed to install CTRL+C signal handler");
-                    })
-                    .1
-                    .await;
-            }
-            _ => {
-                warp::serve(routes)
-                    .bind_with_graceful_shutdown(self.0.bind, async {
-                        tokio::signal::ctrl_c()
-                            .await
-                            .expect("failed to install CTRL+C signal handler");
-                    })
-                    .1
-                    .await;
-            }
+        _ => {
+            axum_server::bind(args.bind)
+                .handle(handle)
+                .serve(route.into_make_service())
+                .await?;
         }
-        Ok(())
     }
+
+    Ok(())
 }
 
 /// Handle the task
-async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
-    // Check the API key
-    check_api_key(task.api_key.as_deref()).await?;
-    // Check the submit limit
-    check_submit_limit(task.images.len()).await?;
+async fn task(
+    State(state): State<Arc<AppState>>,
+    Json(task): Json<Task>,
+) -> Result<Json<TaskResult>> {
+    // Validate the task
+    validate_task(&state, &task)?;
 
     // If the model type is valid, use fallback solver
-    if let Ok(model) = ModelType::from_str(task.game_variant_instructions.0.as_str()) {
-        // Get the args
-        let args = ARGS.get().ok_or_else(|| {
-            warp::reject::custom(InternalServerError("args is not initialized".to_owned()))
-        })?;
+    if let Ok(model) = TypedChallenge::from_str(task.game_variant_instructions.0.as_str()) {
         // handle the solver task
-        handle_solver_task(args, task, model).await
+        handle_solver_task(&state.args, task, model).await
     } else {
         // handle the fallback solver task
-        handle_fallback_solver_task(task).await
+        handle_fallback_solver_task(&state, task).await
     }
 }
 
@@ -117,12 +124,12 @@ async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
 async fn handle_solver_task(
     args: &BootArgs,
     task: Task,
-    model: ModelType,
-) -> Result<Json, Rejection> {
-    let predictor = model::get_predictor(model, args)
-        .await
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+    model: TypedChallenge,
+) -> Result<Json<TaskResult>> {
+    // Get the model predictor
+    let predictor = model::get_predictor(model, args).await?;
 
+    // Handle the single or multiple image task
     let objects = if task.images.len() == 1 {
         handle_single_image_task(&task.images[0], predictor)?
     } else {
@@ -134,19 +141,16 @@ async fn handle_solver_task(
         solved: true,
         objects,
     };
-    Ok(warp::reply::json(&result))
+    Ok(Json(result))
 }
 
 /// Handle the single image task
 fn handle_single_image_task<P: Predictor + ?Sized>(
     image: &String,
     predictor: &P,
-) -> Result<Vec<i32>, Rejection> {
-    let image = decode_image(image).map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-    let answer = predictor
-        .predict(image)
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-
+) -> Result<Vec<i32>> {
+    let image = decode_image(image)?;
+    let answer = predictor.predict(image)?;
     Ok(vec![answer])
 }
 
@@ -154,7 +158,7 @@ fn handle_single_image_task<P: Predictor + ?Sized>(
 fn handle_multiple_images_task<P: Predictor + ?Sized>(
     images: Vec<String>,
     predictor: &P,
-) -> Result<Vec<i32>, Rejection> {
+) -> Result<Vec<i32>> {
     let mut objects = images
         .into_par_iter()
         .enumerate()
@@ -163,23 +167,19 @@ fn handle_multiple_images_task<P: Predictor + ?Sized>(
             let answer = predictor.predict(image)?;
             Ok((index, answer))
         })
-        .collect::<Result<Vec<(usize, i32)>>>()
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+        .collect::<Result<Vec<(usize, i32)>>>()?;
 
     objects.sort_by_key(|&(index, _)| index);
     Ok(objects.into_iter().map(|(_, answer)| answer).collect())
 }
 
 /// Handle the fallback solver task
-async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
-    let solver = SOLVER.get().ok_or_else(|| {
-        warp::reject::custom(InternalServerError("solver is not initialized".to_owned()))
-    })?;
-
-    if task.images.is_empty() {
-        return Err(warp::reject::custom(BadRequest("No images".to_owned())));
-    }
-
+async fn handle_fallback_solver_task(
+    state: &Arc<AppState>,
+    task: Task,
+) -> Result<Json<TaskResult>> {
+    // Get the fallback solver
+    let solver = state.solver.as_ref().unwrap();
     let (game_variant, instructions) = task.game_variant_instructions;
 
     let mut answers = Vec::with_capacity(task.images.len());
@@ -194,8 +194,7 @@ async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
                         images: None,
                         game_variant_instructions: (&game_variant, &instructions),
                     })
-                    .await
-                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                    .await?;
                 answers.extend(answer);
             }
         }
@@ -212,8 +211,7 @@ async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
                         images: Some(chunk),
                         game_variant_instructions: (&game_variant, &instructions),
                     })
-                    .await
-                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
+                    .await?;
                 answers.extend(answer);
             }
         }
@@ -225,30 +223,30 @@ async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
         objects: answers,
     };
 
-    Ok(warp::reply::json(&result))
+    Ok(Json(result))
 }
 
-/// Check the API key
-async fn check_api_key(api_key: Option<&str>) -> Result<(), Rejection> {
-    if let Some(Some(key)) = API_KEY.get() {
-        if let Some(api_key) = api_key {
-            if key.ne(&api_key) {
-                return Err(warp::reject::custom(InvalidTApiKeyError));
-            }
+/// Validate task
+fn validate_task(state: &Arc<AppState>, task: &Task) -> Result<()> {
+    // If API key is not provided, return error
+    state.api_key.as_deref().map_or(Ok(()), |api_key| {
+        if task.api_key.as_deref() == Some(api_key) {
+            Ok(())
         } else {
-            return Err(warp::reject::custom(InvalidTApiKeyError));
+            Err(Error::InvalidApiKey)
         }
-    }
-    Ok(())
-}
+    })?;
 
-/// Check the submit limit
-async fn check_submit_limit(len: usize) -> Result<(), Rejection> {
-    if let Some(Some(limit)) = SUBMIT_LIMIT.get() {
-        if len > *limit {
-            return Err(warp::reject::custom(InvalidSubmitLimitError));
-        }
+    // If images is empty, return error
+    if task.images.is_empty() {
+        return Err(Error::InvalidImages);
     }
+
+    // If images is greater than limit, return error
+    if task.images.len() > state.limit {
+        return Err(Error::InvalidSubmitLimit);
+    }
+
     Ok(())
 }
 
@@ -262,65 +260,9 @@ fn decode_image(base64_string: &String) -> Result<DynamicImage> {
     Ok(image::load_from_memory(&image_bytes)?)
 }
 
-#[derive(Debug)]
-struct BadRequest(String);
-
-#[derive(Debug)]
-struct InternalServerError(String);
-
-#[derive(Debug)]
-struct InvalidTApiKeyError;
-
-#[derive(Debug)]
-struct InvalidSubmitLimitError;
-
-impl Reject for BadRequest {}
-
-impl Reject for InternalServerError {}
-
-impl Reject for InvalidTApiKeyError {}
-
-impl Reject for InvalidSubmitLimitError {}
-
-impl Reject for TaskResult {}
-
-async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
-    let code;
-    let message;
-
-    if err.is_not_found() {
-        code = StatusCode::NOT_FOUND;
-        message = "Not Found".to_owned();
-    } else if let Some(e) = err.find::<BadRequest>() {
-        code = StatusCode::BAD_REQUEST;
-        message = e.0.to_owned();
-    } else if err.find::<InvalidTApiKeyError>().is_some() {
-        code = StatusCode::UNAUTHORIZED;
-        message = "Invalid API key".to_owned();
-    } else if let Some(e) = err.find::<BodyDeserializeError>() {
-        code = StatusCode::BAD_REQUEST;
-        message = e.to_string();
-    } else if err.find::<InvalidSubmitLimitError>().is_some() {
-        code = StatusCode::BAD_REQUEST;
-        if let Some(limit) = SUBMIT_LIMIT.get() {
-            message = format!("Invalid submit limit: {}", limit.unwrap_or(0));
-        } else {
-            message = "Invalid submit limit".to_owned();
-        }
-    } else if let Some(msg) = err.find::<InternalServerError>() {
-        code = StatusCode::INTERNAL_SERVER_ERROR;
-        message = msg.0.to_owned();
-    } else {
-        tracing::info!("Unhandled application error: {:?}", err);
-        code = StatusCode::INTERNAL_SERVER_ERROR;
-        message = "Internal Server Error".to_owned();
-    }
-
-    let json = warp::reply::json(&TaskResult {
-        error: Some(message),
-        solved: false,
-        objects: vec![],
-    });
-
-    Ok(warp::reply::with_status(json, code))
+/// Handles the 404 requests.
+async fn handler_404() -> impl IntoResponse {
+    Html(
+        r#"<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>NOTHING TO SEE HERE</title><style>body{font-family:Arial,sans-serif;background-color:#f8f8f8;margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;color:#333}.container{text-align:center;max-width:600px;padding:20px;background-color:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.1)}h1{font-size:72px;margin:0;color:#ff6f61}a{display:block;margin-top:20px;color:#ff6f61;text-decoration:none;font-weight:bold;font-size:18px}a:hover{text-decoration:underline}</style></head><body><div class="container"><h1>NOTHING TO SEE HERE</h1></div></body></html>"#,
+    )
 }
