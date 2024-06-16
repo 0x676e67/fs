@@ -1,14 +1,15 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImageClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct PenguinPredictor(ImageClassifierPredictor);
 
 impl PenguinPredictor {
     /// Create a new instance of the TrainCoordinatesPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new("penguin.onnx", args)?))
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(ImageClassifierPredictor::new("penguin.onnx", config)?))
     }
 }
 

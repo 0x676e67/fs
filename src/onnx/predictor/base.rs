@@ -1,4 +1,4 @@
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 use ndarray::Array4;
 use ort::MemoryInfo;
@@ -13,27 +13,26 @@ use std::{
 };
 
 use crate::homedir;
-use crate::BootArgs;
-
-use super::image_processing::check_input_image_size;
-use super::image_processing::process_classifier_image;
-use super::image_processing::process_pair_classifier_ans_image;
-use super::image_processing::process_pair_classifier_image;
+use crate::onnx::util::{
+    check_input_image_size, process_classifier_image, process_pair_classifier_ans_image,
+    process_pair_classifier_image,
+};
+use crate::onnx::ONNXConfig;
 
 pub struct ImagePairClassifierPredictor((Session, bool));
 pub struct ImageClassifierPredictor(Session);
 
 impl ImagePairClassifierPredictor {
     /// Create a new instance of the ImagePairClassifierPredictor
-    pub fn new(onnx: &'static str, args: &BootArgs, is_grayscale: bool) -> Result<Self> {
-        Ok(Self((create_model_session(onnx, args)?, is_grayscale)))
+    pub fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
+        Ok(Self((create_model_session(onnx, config)?, is_grayscale)))
     }
 }
 
 impl ImageClassifierPredictor {
     /// Create a new instance of the ImageClassifierPredictor
-    pub fn new(onnx: &'static str, args: &BootArgs) -> Result<Self> {
-        Ok(Self(create_model_session(onnx, args)?))
+    pub fn new(onnx: &'static str, config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(create_model_session(onnx, config)?))
     }
 }
 
@@ -113,18 +112,14 @@ impl ImageClassifierPredictor {
     }
 }
 
-fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> {
-    let model_dir = args
+fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Session> {
+    let model_dir = config
         .model_dir
         .as_ref()
         .map(|x| x.to_owned())
-        .unwrap_or_else(|| {
-            homedir::home_dir()
-                .unwrap_or_default()
-                .join(".funcaptcha_models")
-        });
+        .unwrap_or_else(|| homedir::home_dir().unwrap_or_default().join(".onnx_models"));
 
-    if args.update_check {
+    if config.update_check {
         // check version.json is exist
         if model_dir.join("version.json").exists() {
             // delete version.json
@@ -132,14 +127,14 @@ fn create_model_session(onnx: &'static str, args: &BootArgs) -> Result<Session> 
         }
     }
 
-    let model_file = initialize_model(onnx, model_dir, args.update_check)?;
+    let model_file = initialize_model(onnx, model_dir, config.update_check)?;
     let session = Session::builder()?
         .with_optimization_level(GraphOptimizationLevel::Level3)?
         .with_parallel_execution(true)?
         .with_memory_pattern(true)?
-        .with_intra_threads(args.num_threads as usize)?
+        .with_intra_threads(config.num_threads as usize)?
         .with_allocator(MemoryInfo::new_cpu(
-            args.allocator,
+            config.allocator,
             ort::MemoryType::Default,
         )?)?
         .commit_from_file(model_file)?;
@@ -184,7 +179,7 @@ fn initialize_model(
         let expected_hash = &version_info[&model_name
             .split('.')
             .next()
-            .ok_or_else(|| anyhow::anyhow!("model name is not valid"))?
+            .ok_or_else(|| crate::Error::InvalidModelName(model_name.to_string()))?
             .to_string()];
 
         let current_hash = file_sha256(&model_filename)?;

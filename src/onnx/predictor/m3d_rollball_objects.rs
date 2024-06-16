@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct M3DRotationPredictor(ImagePairClassifierPredictor);
 
 impl M3DRotationPredictor {
     /// Create a new instance of the M3DRotationPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "3d_rollball_objects_v2.onnx",
-            args,
+            config,
             false,
         )?))
     }

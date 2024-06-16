@@ -47,7 +47,7 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--tls-key`, TLS private key file
 - `--api-key`, API key
 - `--update-check`, Funcaptcha model update check
-- `--multi-image-limit`, Multiple image submission limits, default 3
+- `--image-limit`, Multiple image submission limits, default 3
 - `--model-dir`, Funcaptcha model directory
 - `--num-threads`, Number of threads (ONNX Runtime), default 1
 - `--allocator`, Execution provider allocator e.g. device, arena (ONNX Runtime), default device
@@ -89,7 +89,7 @@ Options:
           TLS private key file
   -A, --api-key <API_KEY>
           API key
-  -M, --multi-image-limit <MULTI_IMAGE_LIMIT>
+  -M, --image-limit <image_limit>
           Multiple image submission limits [default: 3]
   -U, --update-check
           Funcaptcha model update check

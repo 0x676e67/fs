@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct NumericalmatchPredictor(ImagePairClassifierPredictor);
 
 impl NumericalmatchPredictor {
     /// Create a new instance of the NumericalmatchPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "numericalmatch.onnx",
-            args,
+            config,
             false,
         )?))
     }

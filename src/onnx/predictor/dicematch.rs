@@ -1,14 +1,16 @@
 use super::{base::ImageClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::onnx::ONNXConfig;
+use crate::Result;
 use image::DynamicImage;
-
 pub struct DicematchMatchPredictor(ImageClassifierPredictor);
 
 impl DicematchMatchPredictor {
     /// Create a new instance of the DicematchMatchPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new("dicematch.onnx", args)?))
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(ImageClassifierPredictor::new(
+            "dicematch.onnx",
+            config,
+        )?))
     }
 }
 

@@ -1,15 +1,18 @@
 pub mod alloc;
 #[cfg(target_family = "unix")]
 pub mod daemon;
+pub mod error;
 pub mod homedir;
-pub mod model;
+pub mod onnx;
 pub mod serve;
 pub mod update;
 
-use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
+use error::Error;
 pub use homedir::setting_dir;
 use std::{net::SocketAddr, path::PathBuf};
+
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
@@ -60,13 +63,13 @@ pub struct BootArgs {
     #[clap(long)]
     pub tls_key: Option<PathBuf>,
 
-    /// API key
+    /// Export API key
     #[clap(short = 'A', long)]
     pub api_key: Option<String>,
 
     /// Multiple image submission limits
     #[clap(short = 'M', long, default_value = "3")]
-    pub multi_image_limit: usize,
+    pub image_limit: usize,
 
     /// Funcaptcha model update check
     #[clap(short = 'U', long)]
@@ -85,7 +88,7 @@ pub struct BootArgs {
     pub allocator: ort::AllocatorType,
 
     /// Fallback solver, supported: "yescaptcha / capsolver"
-    #[clap(short = 'S', long, default_value = "yescaptcha")]
+    #[clap(short = 'S', long)]
     pub fallback_solver: Option<String>,
 
     /// Fallback solver client key
@@ -101,10 +104,10 @@ pub struct BootArgs {
     pub fallback_image_limit: usize,
 }
 
-fn alloc_parser(s: &str) -> anyhow::Result<ort::AllocatorType> {
+fn alloc_parser(s: &str) -> Result<ort::AllocatorType> {
     match s {
         "device" => Ok(ort::AllocatorType::Device),
         "arena" => Ok(ort::AllocatorType::Arena),
-        _ => Err(anyhow::anyhow!("Invalid allocator type")),
+        _ => Err(Error::InvalidAllocator(s.to_string())),
     }
 }

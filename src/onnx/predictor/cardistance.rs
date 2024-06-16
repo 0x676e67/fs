@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct CardistancePredictor(ImagePairClassifierPredictor);
 
 impl CardistancePredictor {
     /// Create a new instance of the CardistancePredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "cardistance.onnx",
-            args,
+            config,
             false,
         )?))
     }

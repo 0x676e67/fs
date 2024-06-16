@@ -1,8 +1,6 @@
-use anyhow::Error as AnyhowError;
-use image::ImageError;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 pub struct Task {
     /// API key
     pub api_key: Option<String>,
@@ -12,42 +10,16 @@ pub struct Task {
     pub game_variant_instructions: (String, String),
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Serialize, typed_builder::TypedBuilder)]
 pub struct TaskResult {
     /// error message, if any
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<String>,
+    #[builder(default, setter(strip_option))]
+    error: Option<String>,
     /// whether the model is a solve
-    pub solved: bool,
+    solved: bool,
     /// whether the model is a classifier
-    pub objects: Vec<i32>,
-}
-
-impl From<ImageError> for TaskResult {
-    fn from(result: ImageError) -> Self {
-        Self {
-            error: Some(result.to_string()),
-            solved: false,
-            objects: vec![],
-        }
-    }
-}
-impl From<base64::DecodeError> for TaskResult {
-    fn from(result: base64::DecodeError) -> Self {
-        Self {
-            error: Some(result.to_string()),
-            solved: false,
-            objects: vec![],
-        }
-    }
-}
-
-impl From<AnyhowError> for TaskResult {
-    fn from(err: AnyhowError) -> Self {
-        Self {
-            error: Some(err.to_string()),
-            solved: false,
-            objects: vec![],
-        }
-    }
+    #[serde(skip_serializing_if = "Option::is_none")]
+    #[builder(default, setter(strip_option))]
+    objects: Option<Vec<i32>>,
 }

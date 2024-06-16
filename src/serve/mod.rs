@@ -1,254 +1,228 @@
+mod signal;
 mod solver;
 mod task;
 
-use std::convert::Infallible;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use self::solver::Solver;
-use self::task::{Task, TaskResult};
-use crate::model::{ModelType, Predictor};
+pub use self::task::Task;
+use crate::error::Error;
+use crate::onnx::Variant;
+use crate::onnx::{ONNXConfig, Predictor};
 use crate::serve::solver::SolverType;
-use crate::{model, BootArgs};
-use anyhow::Result;
+use crate::Result;
+use crate::{onnx, BootArgs};
+use axum::extract::State;
+use axum::response::{Html, IntoResponse};
+use axum::routing::post;
+use axum::{Json, Router};
+use axum_server::tls_rustls::RustlsConfig;
+use axum_server::Handle;
 use image::DynamicImage;
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
-use reqwest::StatusCode;
-use tokio::sync::OnceCell;
-use warp::filters::body::BodyDeserializeError;
-use warp::reject::{Reject, Rejection};
-use warp::reply::{Json, Reply};
-use warp::Filter;
+pub use task::TaskResult;
+use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
+use tracing::Level;
 
-static ARGS: OnceCell<BootArgs> = OnceCell::const_new();
-static API_KEY: OnceCell<Option<String>> = OnceCell::const_new();
-static SUBMIT_LIMIT: OnceCell<Option<usize>> = OnceCell::const_new();
-static SOLVER: OnceCell<Solver> = OnceCell::const_new();
+/// Application state
+struct AppState {
+    // API key
+    api_key: Option<String>,
+    // Submit image limit
+    limit: usize,
+    // Fallback solver
+    fallback_solver: Option<Solver>,
+    // ONNX configuration
+    onnx: onnx::ONNXConfig,
+}
 
-pub struct Serve(BootArgs);
+#[tokio::main]
+pub async fn run(args: BootArgs) -> Result<()> {
+    // Initialize the logger.
+    tracing_subscriber::fmt()
+        .with_max_level(if args.debug {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        })
+        .init();
 
-impl Serve {
-    pub fn new(args: BootArgs) -> Self {
-        Self(args)
+    // Initialize the application state.
+    let state = AppState {
+        api_key: args.api_key,
+        limit: args.image_limit,
+        fallback_solver: match (args.fallback_solver, args.fallback_key) {
+            (Some(solver), Some(key)) => Some(
+                Solver::builder()
+                    .typed(SolverType::from_str(&solver)?)
+                    .client(reqwest::Client::new())
+                    .client_key(key)
+                    .limit(args.image_limit)
+                    .endpoint(args.fallback_endpoint)
+                    .build(),
+            ),
+            _ => None,
+        },
+        onnx: ONNXConfig::builder()
+            .model_dir(args.model_dir)
+            .update_check(args.update_check)
+            .num_threads(args.num_threads)
+            .allocator(args.allocator)
+            .build(),
+    };
+
+    // Create the router.
+    let route = Router::new()
+        .route("/task", post(task))
+        .fallback(handler_404)
+        .layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::default().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO))
+                .on_failure(DefaultOnFailure::new().level(Level::WARN)),
+        )
+        .with_state(Arc::new(state));
+
+    tracing::info!("Listening on {}", args.bind);
+
+    // Signal the server to shut down using Handle.
+    let handle = Handle::new();
+
+    // Spawn a task to gracefully shutdown server.
+    tokio::spawn(signal::graceful_shutdown(handle.clone()));
+
+    // If TLS certificate and key are provided, use them.
+    match (args.tls_cert, args.tls_key) {
+        (Some(cert), Some(key)) => {
+            let config = RustlsConfig::from_pem_file(cert, key).await?;
+            axum_server::bind_rustls(args.bind, config)
+                .handle(handle)
+                .serve(route.into_make_service())
+                .await?;
+        }
+        _ => {
+            axum_server::bind(args.bind)
+                .handle(handle)
+                .serve(route.into_make_service())
+                .await?;
+        }
     }
 
-    #[tokio::main]
-    pub async fn run(self) -> Result<()> {
-        // Init args
-        ARGS.set(self.0.clone())?;
-
-        // Init API key
-        API_KEY.set(self.0.api_key)?;
-
-        // Init submit limit
-        SUBMIT_LIMIT.set(Some(self.0.multi_image_limit))?;
-
-        // Init fallback solver
-        if let (Some(solver), Some(key)) = (self.0.fallback_solver, self.0.fallback_key) {
-            let _ = SOLVER.set(Solver::new(
-                SolverType::from_str(&solver)?,
-                key,
-                self.0.fallback_endpoint,
-                self.0.fallback_image_limit,
-            ));
-        }
-
-        // Init routes
-        let routes = warp::path("task")
-            .and(warp::post())
-            .and(warp::body::json())
-            .and_then(handle_task)
-            .recover(handle_rejection)
-            .with(warp::trace::request());
-
-        tracing::info!("Listening on {}", self.0.bind);
-
-        // Start the server
-        match (self.0.tls_cert, self.0.tls_key) {
-            (Some(cert), Some(key)) => {
-                warp::serve(routes)
-                    .tls()
-                    .cert_path(cert)
-                    .key_path(key)
-                    .bind_with_graceful_shutdown(self.0.bind, async {
-                        tokio::signal::ctrl_c()
-                            .await
-                            .expect("failed to install CTRL+C signal handler");
-                    })
-                    .1
-                    .await;
-            }
-            _ => {
-                warp::serve(routes)
-                    .bind_with_graceful_shutdown(self.0.bind, async {
-                        tokio::signal::ctrl_c()
-                            .await
-                            .expect("failed to install CTRL+C signal handler");
-                    })
-                    .1
-                    .await;
-            }
-        }
-        Ok(())
-    }
+    Ok(())
 }
 
 /// Handle the task
-async fn handle_task(task: Task) -> Result<impl Reply, Rejection> {
-    // Check the API key
-    check_api_key(task.api_key.as_deref()).await?;
-    // Check the submit limit
-    check_submit_limit(task.images.len()).await?;
+/// This function is responsible for handling tasks. It takes the application state and a task as input.
+/// It first validates the task, then tries to convert the task to a variant.
+/// Depending on whether a fallback solver is available, it either uses the solver task or the fallback solver task.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+async fn task(
+    State(state): State<Arc<AppState>>, // The application state
+    Json(task): Json<Task>,             // The task to be handled
+) -> Result<Json<TaskResult>> {
+    // Validate the task
+    validate_task(&state, &task)?;
 
-    // If the model type is valid, use fallback solver
-    if let Ok(model) = ModelType::from_str(task.game_variant_instructions.0.as_str()) {
-        // Get the args
-        let args = ARGS.get().ok_or_else(|| {
-            warp::reject::custom(InternalServerError("args is not initialized".to_owned()))
-        })?;
-        // handle the solver task
-        handle_solver_task(args, task, model).await
-    } else {
-        // handle the fallback solver task
-        handle_fallback_solver_task(task).await
+    // Try to convert the task to a variant
+    let variant_result = Variant::try_from(&task);
+
+    // Match the fallback solver
+    match state.fallback_solver.as_ref() {
+        None => solver_task(&state.onnx, variant_result?, task).await,
+        Some(solver) => match variant_result {
+            Ok(variant) => solver_task(&state.onnx, variant, task).await,
+            Err(_) => fallback_solver_task(solver, task).await,
+        },
     }
 }
 
 /// Handle the model task
-async fn handle_solver_task(
-    args: &BootArgs,
+/// This function is responsible for handling tasks using the model. It takes the ONNX configuration, a variant, and a task as input.
+/// It first gets the model predictor, then processes the task using the predictor.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
+/// If there is an error during the process, it returns a Result wrapping an error.
+async fn solver_task(
+    config: &ONNXConfig,
+    variant: Variant,
     task: Task,
-    model: ModelType,
-) -> Result<Json, Rejection> {
-    let predictor = model::get_predictor(model, args)
-        .await
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+) -> Result<Json<TaskResult>> {
+    // Get the model predictor
+    let predictor = onnx::get_predictor(variant, config).await?;
 
-    let objects = if task.images.len() == 1 {
-        handle_single_image_task(&task.images[0], predictor)?
-    } else {
-        handle_multiple_images_task(task.images, predictor)?
-    };
+    // Process the task
+    let answers = process_image_tasks(task.images, predictor)?;
 
-    let result = TaskResult {
-        error: None,
-        solved: true,
-        objects,
-    };
-    Ok(warp::reply::json(&result))
+    // If the task is successfully processed, return the answers
+    Ok(Json(
+        TaskResult::builder().solved(true).objects(answers).build(),
+    ))
 }
 
-/// Handle the single image task
-fn handle_single_image_task<P: Predictor + ?Sized>(
-    image: &String,
-    predictor: &P,
-) -> Result<Vec<i32>, Rejection> {
-    let image = decode_image(image).map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
-    let answer = predictor
-        .predict(image)
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+/// Handle the fallback solver task
+/// This function is responsible for handling tasks using the fallback solver. It takes a solver and a task as input.
+/// It processes the task using the solver.
+/// The function is asynchronous and returns a Result wrapping a JSON TaskResult.
+/// If the task is successfully processed, it returns a Result wrapping a JSON TaskResult with solved set to true and objects set to the answers.
+/// If there is an error during the process, it returns a Result wrapping an error.
+async fn fallback_solver_task(solver: &Solver, task: Task) -> Result<Json<TaskResult>> {
+    // Process the task
+    let answers = solver.process(task).await?;
 
-    Ok(vec![answer])
+    // If the task is successfully processed, return the answers
+    Ok(Json(
+        TaskResult::builder().solved(true).objects(answers).build(),
+    ))
 }
 
-/// Handle the multiple images task
-fn handle_multiple_images_task<P: Predictor + ?Sized>(
-    images: Vec<String>,
-    predictor: &P,
-) -> Result<Vec<i32>, Rejection> {
+/// Process image tasks
+/// This function is responsible for processing tasks with one or more images. It takes a vector of images and a predictor as input.
+/// It decodes each image, uses the predictor to predict the answer for each image, and collects the answers in a vector.
+/// The function returns a Result wrapping a vector of integers.
+fn process_image_tasks<P: Predictor + ?Sized>(
+    images: Vec<String>, // The images to be processed
+    predictor: &P,       // The predictor to be used
+) -> Result<Vec<i32>> {
     let mut objects = images
         .into_par_iter()
         .enumerate()
         .map(|(index, image)| {
-            let image = decode_image(&image)?;
-            let answer = predictor.predict(image)?;
-            Ok((index, answer))
+            let image = decode_image(&image)?; // Decode the image
+            let answer = predictor.predict(image)?; // Predict the answer
+            Ok((index, answer)) // Return the answer
         })
-        .collect::<Result<Vec<(usize, i32)>>>()
-        .map_err(|e| warp::reject::custom(BadRequest(e.to_string())))?;
+        .collect::<Result<Vec<(usize, i32)>>>()?;
 
     objects.sort_by_key(|&(index, _)| index);
     Ok(objects.into_iter().map(|(_, answer)| answer).collect())
 }
 
-/// Handle the fallback solver task
-async fn handle_fallback_solver_task(task: Task) -> Result<Json, Rejection> {
-    let solver = SOLVER.get().ok_or_else(|| {
-        warp::reject::custom(InternalServerError("solver is not initialized".to_owned()))
-    })?;
+/// Validate the task
+/// This function checks if the task is valid. It takes the application state and a task as input.
+/// It first checks if the API key is provided and matches the one in the application state.
+/// Then it checks if the number of images in the task is within the limit.
+/// If any of these checks fail, it returns an error.
+/// If all checks pass, it returns Ok.
+fn validate_task(state: &Arc<AppState>, task: &Task) -> Result<()> {
+    // Check if API key is provided and matches the one in the state
+    match &state.api_key {
+        Some(api_key) if task.api_key.as_deref() != Some(api_key) => {
+            return Err(Error::InvalidApiKey)
+        }
+        _ => (),
+    }
 
+    // Check if images is empty
     if task.images.is_empty() {
-        return Err(warp::reject::custom(BadRequest("No images".to_owned())));
+        return Err(Error::InvalidImages);
     }
 
-    let (game_variant, instructions) = task.game_variant_instructions;
-
-    let mut answers = Vec::with_capacity(task.images.len());
-    match solver.solver() {
-        solver::SolverType::Yescaptcha => {
-            // single image
-            for image in task.images {
-                // submit task
-                let answer = solver
-                    .submit_task(solver::SubmitTask {
-                        image: Some(&image),
-                        images: None,
-                        game_variant_instructions: (&game_variant, &instructions),
-                    })
-                    .await
-                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
-                answers.extend(answer);
-            }
-        }
-        solver::SolverType::Capsolver => {
-            // split chunk images
-            let images_chunk = task.images.chunks(solver.limit().max(1));
-
-            // submit multiple images task
-            for chunk in images_chunk {
-                // submit task
-                let answer = solver
-                    .submit_task(solver::SubmitTask {
-                        image: None,
-                        images: Some(chunk),
-                        game_variant_instructions: (&game_variant, &instructions),
-                    })
-                    .await
-                    .map_err(|e| warp::reject::custom(InternalServerError(e.to_string())))?;
-                answers.extend(answer);
-            }
-        }
+    // Check if images is greater than limit
+    if task.images.len() > state.limit {
+        return Err(Error::InvalidSubmitLimit);
     }
 
-    let result = TaskResult {
-        error: None,
-        solved: true,
-        objects: answers,
-    };
-
-    Ok(warp::reply::json(&result))
-}
-
-/// Check the API key
-async fn check_api_key(api_key: Option<&str>) -> Result<(), Rejection> {
-    if let Some(Some(key)) = API_KEY.get() {
-        if let Some(api_key) = api_key {
-            if key.ne(&api_key) {
-                return Err(warp::reject::custom(InvalidTApiKeyError));
-            }
-        } else {
-            return Err(warp::reject::custom(InvalidTApiKeyError));
-        }
-    }
-    Ok(())
-}
-
-/// Check the submit limit
-async fn check_submit_limit(len: usize) -> Result<(), Rejection> {
-    if let Some(Some(limit)) = SUBMIT_LIMIT.get() {
-        if len > *limit {
-            return Err(warp::reject::custom(InvalidSubmitLimitError));
-        }
-    }
     Ok(())
 }
 
@@ -262,65 +236,9 @@ fn decode_image(base64_string: &String) -> Result<DynamicImage> {
     Ok(image::load_from_memory(&image_bytes)?)
 }
 
-#[derive(Debug)]
-struct BadRequest(String);
-
-#[derive(Debug)]
-struct InternalServerError(String);
-
-#[derive(Debug)]
-struct InvalidTApiKeyError;
-
-#[derive(Debug)]
-struct InvalidSubmitLimitError;
-
-impl Reject for BadRequest {}
-
-impl Reject for InternalServerError {}
-
-impl Reject for InvalidTApiKeyError {}
-
-impl Reject for InvalidSubmitLimitError {}
-
-impl Reject for TaskResult {}
-
-async fn handle_rejection(err: Rejection) -> Result<impl Reply, Infallible> {
-    let code;
-    let message;
-
-    if err.is_not_found() {
-        code = StatusCode::NOT_FOUND;
-        message = "Not Found".to_owned();
-    } else if let Some(e) = err.find::<BadRequest>() {
-        code = StatusCode::BAD_REQUEST;
-        message = e.0.to_owned();
-    } else if err.find::<InvalidTApiKeyError>().is_some() {
-        code = StatusCode::UNAUTHORIZED;
-        message = "Invalid API key".to_owned();
-    } else if let Some(e) = err.find::<BodyDeserializeError>() {
-        code = StatusCode::BAD_REQUEST;
-        message = e.to_string();
-    } else if err.find::<InvalidSubmitLimitError>().is_some() {
-        code = StatusCode::BAD_REQUEST;
-        if let Some(limit) = SUBMIT_LIMIT.get() {
-            message = format!("Invalid submit limit: {}", limit.unwrap_or(0));
-        } else {
-            message = "Invalid submit limit".to_owned();
-        }
-    } else if let Some(msg) = err.find::<InternalServerError>() {
-        code = StatusCode::INTERNAL_SERVER_ERROR;
-        message = msg.0.to_owned();
-    } else {
-        tracing::info!("Unhandled application error: {:?}", err);
-        code = StatusCode::INTERNAL_SERVER_ERROR;
-        message = "Internal Server Error".to_owned();
-    }
-
-    let json = warp::reply::json(&TaskResult {
-        error: Some(message),
-        solved: false,
-        objects: vec![],
-    });
-
-    Ok(warp::reply::with_status(json, code))
+/// Handles the 404 requests.
+async fn handler_404() -> impl IntoResponse {
+    Html(
+        r#"<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>NOTHING TO SEE HERE</title><style>body{font-family:Arial,sans-serif;background-color:#f8f8f8;margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;color:#333}.container{text-align:center;max-width:600px;padding:20px;background-color:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.1)}h1{font-size:72px;margin:0;color:#ff6f61}a{display:block;margin-top:20px;color:#ff6f61;text-decoration:none;font-weight:bold;font-size:18px}a:hover{text-decoration:underline}</style></head><body><div class="container"><h1>NOTHING TO SEE HERE</h1></div></body></html>"#,
+    )
 }
