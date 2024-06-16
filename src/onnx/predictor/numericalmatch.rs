@@ -8,12 +8,10 @@ pub struct NumericalmatchPredictor(ImagePairClassifierPredictor);
 
 impl NumericalmatchPredictor {
     /// Create a new instance of the NumericalmatchPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "numericalmatch.onnx",
-            config,
-            false,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("numericalmatch.onnx", config, false).await?,
+        ))
     }
 }
 

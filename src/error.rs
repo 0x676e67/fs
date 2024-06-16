@@ -7,7 +7,7 @@ pub enum Error {
     #[error(transparent)]
     SelfUpdateError(#[from] self_update::errors::Error),
 
-    #[error("fcsrv is not running")]
+    #[error("fc is not running")]
     NotRunning,
 
     #[error(transparent)]

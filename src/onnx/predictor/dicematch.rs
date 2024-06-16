@@ -6,11 +6,10 @@ pub struct DicematchMatchPredictor(ImageClassifierPredictor);
 
 impl DicematchMatchPredictor {
     /// Create a new instance of the DicematchMatchPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new(
-            "dicematch.onnx",
-            config,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("dicematch.onnx", config).await?,
+        ))
     }
 }
 

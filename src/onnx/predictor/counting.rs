@@ -6,11 +6,10 @@ pub struct CountingPredictor(ImageClassifierPredictor);
 
 impl CountingPredictor {
     /// Create a new instance of the CountingPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new(
-            "counting.onnx",
-            config,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("counting.onnx", config).await?,
+        ))
     }
 }
 

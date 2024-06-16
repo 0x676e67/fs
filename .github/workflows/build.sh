@@ -3,7 +3,7 @@
 : ${root=$(pwd)}
 : ${tag=latest}
 : ${os=linux}
-: ${name=fcsrv}
+: ${name=fc}
 
 # Function to print colored text based on log level
 log() {

@@ -16,7 +16,7 @@ use predictor::{
     penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor, shadows::ShadowsPredictor,
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
-use std::path::PathBuf;
+use std::{future::Future, path::PathBuf};
 use tokio::sync::OnceCell;
 pub use variant::Variant;
 
@@ -169,13 +169,14 @@ pub async fn get_predictor(
     }
 }
 
-async fn get_predictor_from_cell<P, F>(
+async fn get_predictor_from_cell<P, F, Fut>(
     cell: &'static OnceCell<P>,
     creator: F,
 ) -> Result<&'static dyn Predictor>
 where
     P: Predictor + 'static,
-    F: FnOnce() -> Result<P>,
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = Result<P>>,
 {
-    Ok(cell.get_or_try_init(|| async { creator() }).await? as &'static dyn Predictor)
+    Ok(cell.get_or_try_init(creator).await? as &'static dyn Predictor)
 }

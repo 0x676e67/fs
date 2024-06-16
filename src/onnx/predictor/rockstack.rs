@@ -8,12 +8,10 @@ pub struct RockstackPredictor(ImagePairClassifierPredictor);
 
 impl RockstackPredictor {
     /// Create a new instance of the RockstackPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "rockstack_v2.onnx",
-            config,
-            true,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("rockstack_v2.onnx", config, true).await?,
+        ))
     }
 }
 

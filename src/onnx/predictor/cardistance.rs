@@ -8,12 +8,10 @@ pub struct CardistancePredictor(ImagePairClassifierPredictor);
 
 impl CardistancePredictor {
     /// Create a new instance of the CardistancePredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "cardistance.onnx",
-            config,
-            false,
-        )?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("cardistance.onnx", config, false).await?,
+        ))
     }
 }
 

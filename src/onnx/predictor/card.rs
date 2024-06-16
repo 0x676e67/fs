@@ -8,8 +8,10 @@ pub struct CardPredictor(ImageClassifierPredictor);
 
 impl CardPredictor {
     /// Create a new instance of the CardPredictor
-    pub fn new(config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImageClassifierPredictor::new("card.onnx", config)?))
+    pub async fn new(config: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImageClassifierPredictor::new("card.onnx", config).await?,
+        ))
     }
 }
 

@@ -1,5 +1,5 @@
 [package]
-name = "fcsrv"
+name = "fc"
 version = "0.2.1"
 edition = "2021"
 description = "Funcaptcha solver server"
@@ -19,7 +19,7 @@ rayon = "1.8.1"
 sha2 = "0.10.8"
 clap = { version = "4.4.18", features = ["derive", "env"] }
 self_update = { version = "0.40.0", default-features = false, features = ["rustls", "archive-tar", "compression-flate2"]  }
-reqwest = { version = "0.11", default-features = false, features = ["rustls", "json", "blocking"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 tokio = { version = "1", features = ["full"] }
 
 # Logger

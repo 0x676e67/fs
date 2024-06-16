@@ -9,12 +9,11 @@ pub struct BrokenJigsawbrokenjigsaw_swap(ImagePairClassifierPredictor);
 
 impl BrokenJigsawbrokenjigsaw_swap {
     /// Create a new instance of the BrokenJigsawbrokenjigsaw_swapl
-    pub fn new(args: &ONNXConfig) -> Result<Self> {
-        Ok(Self(ImagePairClassifierPredictor::new(
-            "BrokenJigsawbrokenjigsaw_swap.onnx",
-            args,
-            false,
-        )?))
+    pub async fn new(args: &ONNXConfig) -> Result<Self> {
+        Ok(Self(
+            ImagePairClassifierPredictor::new("BrokenJigsawbrokenjigsaw_swap.onnx", args, false)
+                .await?,
+        ))
     }
 }
 
