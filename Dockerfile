@@ -8,6 +8,6 @@ RUN cargo build --release
 
 FROM ubuntu:noble-20231214
 
-LABEL org.opencontainers.image.source = "https://github.com/0x676e67/fc"
-COPY --from=builder /src/target/release/fc /bin/fc
-ENTRYPOINT [ "/bin/fc"]
+LABEL org.opencontainers.image.source = "https://github.com/0x676e67/fs"
+COPY --from=builder /src/target/release/fs /bin/fs
+ENTRYPOINT [ "/bin/fs"]

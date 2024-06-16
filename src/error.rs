@@ -6,7 +6,7 @@ pub enum Error {
     #[error(transparent)]
     SelfUpdateError(#[from] self_update::errors::Error),
 
-    #[error("fc is not running")]
+    #[error("fs is not running")]
     NotRunning,
 
     #[error(transparent)]

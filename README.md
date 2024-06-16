@@ -1,16 +1,16 @@
-[![CI](https://github.com/0x676e67/fc/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/ci.yml)
-[![CI](https://github.com/0x676e67/fc/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/release.yml)
-<a target="_blank" href="https://github.com/0x676e67/fc/blob/main/LICENSE">
+[![CI](https://github.com/0x676e67/fs/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/ci.yml)
+[![CI](https://github.com/0x676e67/fs/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/release.yml)
+<a target="_blank" href="https://github.com/0x676e67/fs/blob/main/LICENSE">
 <img src="https://img.shields.io/badge/MIT-blue.svg"/>
 </a>
-<a href="https://github.com/0x676e67/fc/releases">
-<img src="https://img.shields.io/github/release/0x676e67/fc.svg?style=flat">
+<a href="https://github.com/0x676e67/fs/releases">
+<img src="https://img.shields.io/github/release/0x676e67/fs.svg?style=flat">
 </a>
-</a><a href="https://github.com/0x676e67/fc/releases">
-<img src="https://img.shields.io/github/downloads/0x676e67/fc/total?style=flat">
+</a><a href="https://github.com/0x676e67/fs/releases">
+<img src="https://img.shields.io/github/downloads/0x676e67/fs/total?style=flat">
 </a>
 
-# fc
+# fs
 
 ArkoseLabs funcaptcha challenge solver server
 
@@ -35,10 +35,10 @@ variants: `3d_rollball_animals`, `3d_rollball_objects`, `hopscotch_highsec`, `co
 
 #### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
 
-[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc)
+[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs)
 
-[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fc), among others.
-For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fc), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
+[Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), among others.
+For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
 
 ### Usage
 
@@ -60,11 +60,11 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--fallback-image-limit`, Fallback solver image limit, default 1
 
 ```shell
-$ fc -h
+$ fs -h
 Funcaptcha solver server
 
-Usage: fc
-       fc <COMMAND>
+Usage: fs
+       fs <COMMAND>
 
 Commands:
   run      Run server
@@ -80,10 +80,10 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
-$ fc run -h
+$ fs run -h
 Run server
 
-Usage: fc run [OPTIONS]
+Usage: fs run [OPTIONS]
 
 Options:
   -d, --debug
@@ -123,38 +123,38 @@ Options:
 Run on docker
 
 ```shell
-docker run --rm -it -p 8000:8000 --name=fc \
+docker run --rm -it -p 8000:8000 --name=fs \
   -v $(pwd)/models:/models \
-  ghcr.io/0x676e67/fc:latest run --model-dir /models
+  ghcr.io/0x676e67/fs:latest run --model-dir /models
 ```
 
 Run on Ubuntu/Debian
 
 ```shell
-wget https://github.com/0x676e67/fc/releases/download/v0.2.1/fc-0.2.1-x86_64-unknown-linux-gnu.tar.gz
-tar -xf fc-0.2.1-x86_64-unknown-linux-gnu.tar.gz
-mv ./fc /bin/fc
+wget https://github.com/0x676e67/fs/releases/download/v0.2.1/fs-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+tar -xf fs-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+mv ./fs /bin/fs
 
 # Update the application
-fc update
+fs update
 
 # Run server
-fc run
+fs run
 
 # Start server daemon
-fc start
+fs start
 
 # Restart server daemon
-fc restart
+fs restart
 
 # Stop server daemon
-fc stop
+fs stop
 
 # Show the server daemon process
-fc ps
+fs ps
 
 # Show the server daemon log
-fc log
+fs log
 ```
 
 - Request
@@ -196,7 +196,7 @@ curl --location 'http://127.0.0.1:8000/task' \
 - Linux compile, Ubuntu machine for example:
 
 ```shell
-git clone https://github.com/0x676e67/fc.git && cd fc
+git clone https://github.com/0x676e67/fs.git && cd fs
 # Default features cuda/rocm
 cargo build --release
 
@@ -209,12 +209,12 @@ cargo build --release --no-default-features --features directml
 
 ### Contributing
 
-If you would like to submit your contribution, please open a [Pull Request](https://github.com/0x676e67/fc/pulls).
+If you would like to submit your contribution, please open a [Pull Request](https://github.com/0x676e67/fs/pulls).
 
 ### Getting help
 
-Your question might already be answered on the [issues](https://github.com/0x676e67/fc/issues)
+Your question might already be answered on the [issues](https://github.com/0x676e67/fs/issues)
 
 ### License
 
-**fc** © [0x676e67](https://github.com/0x676e67), Released under the [MIT](./LICENSE) License.
+**fs** © [0x676e67](https://github.com/0x676e67), Released under the [MIT](./LICENSE) License.

@@ -1,10 +1,10 @@
-use fc::onnx::Variant;
+use fs::onnx::Variant;
 
 #[tokio::main]
 async fn main() {
     let args = Default::default();
 
-    let predictor = fc::onnx::get_predictor(Variant::Rockstack, &args)
+    let predictor = fs::onnx::get_predictor(Variant::Rockstack, &args)
         .await
         .unwrap();
 

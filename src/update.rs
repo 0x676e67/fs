@@ -4,8 +4,8 @@ pub fn update() -> crate::Result<()> {
     use self_update::update::UpdateStatus;
     let status = self_update::backends::github::Update::configure()
         .repo_owner("0x676e67")
-        .repo_name("fc")
-        .bin_name("fc")
+        .repo_name("fs")
+        .bin_name("fs")
         .target(self_update::get_target())
         .show_output(true)
         .show_download_progress(true)
@@ -16,14 +16,14 @@ pub fn update() -> crate::Result<()> {
     if let UpdateStatus::Updated(ref release) = status {
         if let Some(body) = &release.body {
             if !body.trim().is_empty() {
-                println!("fc upgraded to {}:\n", release.version);
+                println!("fs upgraded to {}:\n", release.version);
                 println!("{}", body);
             } else {
-                println!("fc upgraded to {}", release.version);
+                println!("fs upgraded to {}", release.version);
             }
         }
     } else {
-        println!("fc is up-to-date");
+        println!("fs is up-to-date");
     }
 
     Ok(())

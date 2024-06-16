@@ -1,9 +1,9 @@
-use fc::onnx::Variant;
+use fs::onnx::Variant;
 
 #[tokio::main]
 async fn main() {
     let args = Default::default();
-    let predictor = fc::onnx::get_predictor(Variant::M3dRollballAnimals, &args)
+    let predictor = fs::onnx::get_predictor(Variant::M3dRollballAnimals, &args)
         .await
         .unwrap();
 

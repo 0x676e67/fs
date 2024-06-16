@@ -1,10 +1,10 @@
-use fc::onnx::Variant;
+use fs::onnx::Variant;
 
 #[tokio::main]
 async fn main() {
     let args = Default::default();
 
-    let predictor = fc::onnx::get_predictor(Variant::Card, &args).await.unwrap();
+    let predictor = fs::onnx::get_predictor(Variant::Card, &args).await.unwrap();
 
     let image_file = std::fs::read("docs/card/card_1.jpg").unwrap();
     let guess = predictor

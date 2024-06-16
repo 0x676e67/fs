@@ -1,5 +1,5 @@
 use clap::Parser;
-use fc::{daemon, update, Commands, Opt};
+use fs::{daemon, update, Commands, Opt};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::parse();
