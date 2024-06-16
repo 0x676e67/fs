@@ -13,6 +13,7 @@ pub mod hand_number_puzzle;
 pub mod hopscotch_highsec;
 pub mod knots_crosses_circle;
 pub mod lumber_length_game;
+pub mod m3d_rollball_animals_multi;
 pub mod m3d_rollball_objects;
 pub mod numericalmatch;
 pub mod penguins;
