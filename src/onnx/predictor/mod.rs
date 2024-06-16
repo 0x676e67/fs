@@ -6,6 +6,7 @@ pub mod cardistance;
 pub mod conveyor;
 pub mod coordinatesmatch;
 pub mod counting;
+pub mod dice_pair;
 pub mod dicematch;
 pub mod frankenhead;
 pub mod hand_number_puzzle;

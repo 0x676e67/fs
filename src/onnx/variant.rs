@@ -26,6 +26,7 @@ pub enum Variant {
     Conveyor,
     Unbentobjects,
     LumberLengthGame,
+    DicePair,
 }
 
 impl TryFrom<&Task> for Variant {
@@ -53,6 +54,7 @@ impl TryFrom<&Task> for Variant {
             "conveyor" => Variant::Conveyor,
             "unbentobjects" => Variant::Unbentobjects,
             "lumber-length-game" => Variant::LumberLengthGame,
+            "dice_pair" => Variant::DicePair,
             _ => Err(Error::UnknownVariantType(
                 task.game_variant_instructions.0.clone(),
             ))?,

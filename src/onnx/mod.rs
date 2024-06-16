@@ -8,8 +8,9 @@ use predictor::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
     cardistance::CardistancePredictor, conveyor::ConveyorPredictor,
     coordinatesmatch::CoordinatesMatchPredictor, counting::CountingPredictor,
-    dicematch::DicematchMatchPredictor, frankenhead::FrankenheadPredictor,
-    hand_number_puzzle::HandNumberPuzzlePredictor, hopscotch_highsec::HopscotchHighsecPredictor,
+    dice_pair::DicePairPredictor, dicematch::DicematchMatchPredictor,
+    frankenhead::FrankenheadPredictor, hand_number_puzzle::HandNumberPuzzlePredictor,
+    hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
     lumber_length_game::LumberLengthGamePredictor, m3d_rollball_objects::M3DRotationPredictor,
     numericalmatch::NumericalmatchPredictor, penguins::PenguinsPredictor,
@@ -42,6 +43,7 @@ static NUMERICALMATCH_PREDICTOR: OnceCell<NumericalmatchPredictor> = OnceCell::c
 static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
 static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
 static LUMBER_LENGTH_GAME_PREDICTOR: OnceCell<LumberLengthGamePredictor> = OnceCell::const_new();
+static DICE_PAIR_PREDICTOR: OnceCell<DicePairPredictor> = OnceCell::const_new();
 
 #[derive(typed_builder::TypedBuilder)]
 pub struct ONNXConfig {
@@ -68,6 +70,9 @@ pub async fn get_predictor(
     config: &ONNXConfig,
 ) -> Result<&'static dyn Predictor> {
     match variant {
+        Variant::DicePair => {
+            get_predictor_from_cell(&DICE_PAIR_PREDICTOR, || DicePairPredictor::new(config)).await
+        }
         Variant::LumberLengthGame => {
             get_predictor_from_cell(&LUMBER_LENGTH_GAME_PREDICTOR, || {
                 LumberLengthGamePredictor::new(config)
