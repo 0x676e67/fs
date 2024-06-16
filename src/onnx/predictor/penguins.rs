@@ -4,16 +4,16 @@ use super::{base::ImageClassifierPredictor, Predictor};
 use crate::Result;
 use image::DynamicImage;
 
-pub struct PenguinPredictor(ImageClassifierPredictor);
+pub struct PenguinsPredictor(ImageClassifierPredictor);
 
-impl PenguinPredictor {
-    /// Create a new instance of the TrainCoordinatesPredictor
+impl PenguinsPredictor {
+    /// Create a new instance of the PenguinsPredictor
     pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImageClassifierPredictor::new("penguin.onnx", config)?))
     }
 }
 
-impl Predictor for PenguinPredictor {
+impl Predictor for PenguinsPredictor {
     fn predict(&self, image: DynamicImage) -> Result<i32> {
         self.0.predict(image)
     }
