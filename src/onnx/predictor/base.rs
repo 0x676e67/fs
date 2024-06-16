@@ -1,7 +1,15 @@
 use crate::Result;
 use image::DynamicImage;
 use ndarray::Array4;
+#[cfg(feature = "cuda")]
+use ort::CUDAExecutionProvider;
+#[cfg(feature = "coreml")]
+use ort::CoreMLExecutionProvider;
+#[cfg(feature = "directml")]
+use ort::DirectMLExecutionProvider;
 use ort::MemoryInfo;
+#[cfg(feature = "rocm")]
+use ort::ROCmExecutionProvider;
 use ort::{GraphOptimizationLevel, Session};
 use sha2::Digest;
 use sha2::Sha256;
@@ -52,8 +60,6 @@ impl ImagePairClassifierPredictor {
         let outputs = self.0 .0.run(inputs)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
-            .view()
-            .t()
             .into_owned()
             .into_iter()
             .collect();
@@ -89,8 +95,6 @@ impl ImageClassifierPredictor {
         }?)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
-            .view()
-            .t()
             .into_owned()
             .into_iter()
             .collect();
@@ -138,6 +142,20 @@ async fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result
         .with_parallel_execution(true)?
         .with_memory_pattern(true)?
         .with_intra_threads(config.num_threads as usize)?
+        .with_execution_providers([
+            // Prefer TensorRT over CUDA.
+            #[cfg(feature = "cuda")]
+            CUDAExecutionProvider::default().build(),
+            // Use DirectML on Windows if NVIDIA EPs are not available
+            #[cfg(feature = "directml")]
+            DirectMLExecutionProvider::default().build(),
+            // Or use ANE on Apple platforms
+            #[cfg(feature = "coreml")]
+            CoreMLExecutionProvider::default().build(),
+            // Or use rocm on AMD platforms
+            #[cfg(feature = "rocm")]
+            ROCmExecutionProvider::default().build(),
+        ])?
         .with_allocator(MemoryInfo::new_cpu(
             config.allocator,
             ort::MemoryType::Default,
