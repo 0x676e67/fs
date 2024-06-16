@@ -18,7 +18,7 @@ ort = { version = "2.0.0-rc.2", features = ["ndarray", "half"] }
 rayon = "1.8.1"
 sha2 = "0.10.8"
 clap = { version = "4.4.18", features = ["derive", "env"] }
-self_update = { version = "0.40.0", default-features = false, features = ["rustls", "archive-tar", "compression-flate2"]  }
+self_update = { version = "0.39.0", package = "self-github-update", features = ["archive-tar", "compression-flate2"]  }
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
 tokio = { version = "1", features = ["full"] }
 
