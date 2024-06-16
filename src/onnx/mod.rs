@@ -1,7 +1,8 @@
 mod predictor;
 mod util;
+mod variant;
 
-use crate::{error::Error, Result};
+use crate::Result;
 pub use predictor::Predictor;
 use predictor::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
@@ -15,8 +16,9 @@ use predictor::{
     penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor, shadows::ShadowsPredictor,
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
-use std::{path::PathBuf, str::FromStr};
+use std::path::PathBuf;
 use tokio::sync::OnceCell;
+pub use variant::Variant;
 
 static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
 static COORDINATES_MATCH_PREDICTOR: OnceCell<CoordinatesMatchPredictor> = OnceCell::const_new();
@@ -175,61 +177,4 @@ where
     F: FnOnce() -> Result<P>,
 {
     Ok(cell.get_or_try_init(|| async { creator() }).await? as &'static dyn Predictor)
-}
-
-#[derive(Debug)]
-pub enum Variant {
-    M3dRollballAnimals,
-    M3dRollballObjects,
-    Coordinatesmatch,
-    HopscotchHighsec,
-    TrainCoordinates,
-    Penguin,
-    Shadows,
-    #[allow(non_camel_case_types)]
-    BrokenJigsawbrokenjigsaw_swap,
-    Frankenhead,
-    Counting,
-    Card,
-    Rockstack,
-    Cardistance,
-    PenguinsIcon,
-    KnotsCrossesCircle,
-    HandNumberPuzzle,
-    Dicematch,
-    Numericalmatch,
-    Conveyor,
-    Unbentobjects,
-    LumberLengthGame,
-}
-
-impl FromStr for Variant {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Self> {
-        match s {
-            "3d_rollball_animals" => Ok(Variant::M3dRollballAnimals),
-            "3d_rollball_objects" => Ok(Variant::M3dRollballObjects),
-            "coordinatesmatch" => Ok(Variant::Coordinatesmatch),
-            "hopscotch_highsec" => Ok(Variant::HopscotchHighsec),
-            "train_coordinates" => Ok(Variant::TrainCoordinates),
-            "penguin" => Ok(Variant::Penguin),
-            "shadows" => Ok(Variant::Shadows),
-            "BrokenJigsawbrokenjigsaw_swap" => Ok(Variant::BrokenJigsawbrokenjigsaw_swap),
-            "frankenhead" => Ok(Variant::Frankenhead),
-            "counting" => Ok(Variant::Counting),
-            "card" => Ok(Variant::Card),
-            "rockstack" => Ok(Variant::Rockstack),
-            "cardistance" => Ok(Variant::Cardistance),
-            "penguins-icon" => Ok(Variant::PenguinsIcon),
-            "knotsCrossesCircle" => Ok(Variant::KnotsCrossesCircle),
-            "hand_number_puzzle" => Ok(Variant::HandNumberPuzzle),
-            "dicematch" => Ok(Variant::Dicematch),
-            "numericalmatch" => Ok(Variant::Numericalmatch),
-            "conveyor" => Ok(Variant::Conveyor),
-            "unbentobjects" => Ok(Variant::Unbentobjects),
-            "lumber-length-game" => Ok(Variant::LumberLengthGame),
-            _ => Err(Error::UnknownVariantType(s.to_string())),
-        }
-    }
 }
