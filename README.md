@@ -1,3 +1,15 @@
+[![CI](https://github.com/0x676e67/fc/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/ci.yml)
+[![CI](https://github.com/0x676e67/fc/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/release.yml)
+<a target="_blank" href="https://github.com/0x676e67/fc/blob/main/LICENSE">
+<img src="https://img.shields.io/badge/MIT-blue.svg"/>
+</a>
+<a href="https://github.com/0x676e67/fc/releases">
+<img src="https://img.shields.io/github/release/0x676e67/fc.svg?style=flat">
+</a>
+</a><a href="https://github.com/0x676e67/fc/releases">
+<img src="https://img.shields.io/github/downloads/0x676e67/fc/total?style=flat">
+</a>
+
 # fc
 
 Funcaptcha challenge solver server
