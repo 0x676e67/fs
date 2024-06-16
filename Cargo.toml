@@ -2,7 +2,11 @@
 name = "fs"
 version = "0.3.0"
 edition = "2021"
-description = "Funcaptcha solver server"
+description = "ArkoseLabs funcaptcha challenge solver server"
+readme = "README.md"
+license = "MIT"
+homepage = "https://github.com/0x676e67/fs"
+repository = "https://github.com/0x676e67/fs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
