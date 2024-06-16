@@ -54,21 +54,16 @@ jemallocator = { package = "tikv-jemallocator", version = "0.5.4", optional = tr
 mimalloc = { version = "0.1.39", default-features = false, optional = true }
 
 [features]
-default = ["cuda", "coreml", "directml", "mimalloc"]
+default = ["cuda", "rocm"]
 cuda = ["ort/cuda"]
 rocm = ["ort/rocm"]
 coreml = ["ort/coreml"]
 directml = ["ort/directml"]
 
-# Enable jemalloc for binaries
 jemalloc = ["jemallocator"]
-# Enable bundled tcmalloc
 tcmalloc = ["tcmalloc/bundled"]
-# Enable snmalloc for binaries
 snmalloc = ["snmalloc-rs"]
-# Enable bundled rpmalloc
 rpmalloc = ["dep:rpmalloc"]
-# Enable mimalloc for binaries
 mimalloc = ["dep:mimalloc"]
 
 
