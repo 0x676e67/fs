@@ -3,7 +3,7 @@ pub mod alloc;
 pub mod daemon;
 pub mod error;
 pub mod homedir;
-pub mod model;
+pub mod onnx;
 pub mod serve;
 pub mod update;
 
@@ -12,7 +12,7 @@ use error::Error;
 pub use homedir::setting_dir;
 use std::{net::SocketAddr, path::PathBuf};
 
-type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Parser)]
 #[clap(author, version, about, arg_required_else_help = true)]
@@ -63,13 +63,13 @@ pub struct BootArgs {
     #[clap(long)]
     pub tls_key: Option<PathBuf>,
 
-    /// API key
+    /// Export API key
     #[clap(short = 'A', long)]
     pub api_key: Option<String>,
 
     /// Multiple image submission limits
     #[clap(short = 'M', long, default_value = "3")]
-    pub multi_image_limit: usize,
+    pub image_limit: usize,
 
     /// Funcaptcha model update check
     #[clap(short = 'U', long)]
@@ -88,7 +88,7 @@ pub struct BootArgs {
     pub allocator: ort::AllocatorType,
 
     /// Fallback solver, supported: "yescaptcha / capsolver"
-    #[clap(short = 'S', long, default_value = "yescaptcha")]
+    #[clap(short = 'S', long)]
     pub fallback_solver: Option<String>,
 
     /// Fallback solver client key

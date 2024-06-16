@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct ConveyorPredictor(ImagePairClassifierPredictor);
 
 impl ConveyorPredictor {
     /// Create a new instance of the ConveyorPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "conveyor.onnx",
-            args,
+            config,
             false,
         )?))
     }

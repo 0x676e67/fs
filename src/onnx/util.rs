@@ -1,11 +1,11 @@
-use anyhow::Result;
+use crate::{error::Error, Result};
 use image::GenericImageView;
 use ndarray::Array4;
 
 pub fn check_input_image_size(image: &image::DynamicImage) -> Result<()> {
     let (width, height) = image.dimensions();
     if height != 400 || width % 200 != 0 {
-        anyhow::bail!("Invalid input image size: {:?}", image.dimensions());
+        return Err(Error::InvalidImageSize((width, height)));
     }
     Ok(())
 }

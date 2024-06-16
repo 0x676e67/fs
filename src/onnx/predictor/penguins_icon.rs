@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImageClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct PenguinsIconPredictor(ImageClassifierPredictor);
 
 impl PenguinsIconPredictor {
     /// Create a new instance of the PenguinsIconPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImageClassifierPredictor::new(
             "penguins-icon.onnx",
-            args,
+            config,
         )?))
     }
 }

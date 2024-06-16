@@ -1,16 +1,17 @@
+use crate::onnx::ONNXConfig;
+
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
 pub struct HopscotchHighsecPredictor(ImagePairClassifierPredictor);
 
 impl HopscotchHighsecPredictor {
     /// Create a new instance of the HopscotchHighsecPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "hopscotch_highsec.onnx",
-            args,
+            config,
             false,
         )?))
     }

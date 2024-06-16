@@ -1,4 +1,3 @@
-use anyhow::Error as AnyhowError;
 use image::ImageError;
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +19,8 @@ pub struct TaskResult {
     /// whether the model is a solve
     pub solved: bool,
     /// whether the model is a classifier
-    pub objects: Vec<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub objects: Option<Vec<i32>>,
 }
 
 impl From<ImageError> for TaskResult {
@@ -28,7 +28,7 @@ impl From<ImageError> for TaskResult {
         Self {
             error: Some(result.to_string()),
             solved: false,
-            objects: vec![],
+            objects: None,
         }
     }
 }
@@ -37,17 +37,7 @@ impl From<base64::DecodeError> for TaskResult {
         Self {
             error: Some(result.to_string()),
             solved: false,
-            objects: vec![],
-        }
-    }
-}
-
-impl From<AnyhowError> for TaskResult {
-    fn from(err: AnyhowError) -> Self {
-        Self {
-            error: Some(err.to_string()),
-            solved: false,
-            objects: vec![],
+            objects: None,
         }
     }
 }

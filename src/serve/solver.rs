@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
-use anyhow::Result;
+use crate::error::Error;
+use crate::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -11,20 +12,14 @@ pub enum SolverType {
     Capsolver,
 }
 
-impl Default for SolverType {
-    fn default() -> Self {
-        Self::Yescaptcha
-    }
-}
-
 impl FromStr for SolverType {
-    type Err = anyhow::Error;
+    type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
+    fn from_str(s: &str) -> Result<Self> {
         match s {
             "yescaptcha" => Ok(Self::Yescaptcha),
             "capsolver" => Ok(Self::Capsolver),
-            _ => Err(anyhow::anyhow!("Only support `yescaptcha` / `capsolver`")),
+            _ => Err(Error::InvalidSolverType(s.to_string())),
         }
     }
 }
@@ -96,25 +91,23 @@ impl Solver {
             ),
         };
 
-        let resp = self.client.post(endpoint).json(&body).send().await?;
+        // Send request
+        let resp = self
+            .client
+            .post(endpoint)
+            .json(&body)
+            .send()
+            .await?
+            .error_for_status()?;
 
-        match resp.error_for_status_ref() {
-            Ok(_) => {
-                // Task response
-                match self.typed {
-                    SolverType::Yescaptcha | SolverType::Capsolver => {
-                        let task = resp.json::<TaskResp0>().await?;
-                        // If error
-                        if let Some(error_description) = task.error_description {
-                            return Err(anyhow::anyhow!(error_description));
-                        }
-
-                        Ok(task.solution.objects)
-                    }
-                }
-            }
-            Err(_) => Err(anyhow::anyhow!(resp.text().await?)),
+        // Task response
+        let task = resp.json::<TaskResp0>().await?;
+        // If error
+        if let Some(error_description) = task.error_description {
+            return Err(Error::FallbackSolverError(error_description));
         }
+
+        Ok(task.solution.objects)
     }
 }
 
@@ -136,14 +129,6 @@ struct TaskResp0 {
 #[derive(Deserialize, Default)]
 #[serde(default)]
 struct SolutionResp {
-    objects: Vec<i32>,
-}
-
-#[derive(Deserialize, Default)]
-#[serde(default)]
-struct TaskResp1 {
-    error: Option<String>,
-    solve: bool,
     objects: Vec<i32>,
 }
 

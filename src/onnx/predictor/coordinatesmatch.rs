@@ -1,16 +1,16 @@
 use super::{base::ImagePairClassifierPredictor, Predictor};
-use crate::BootArgs;
-use anyhow::Result;
+use crate::Result;
 use image::DynamicImage;
 
+use crate::onnx::ONNXConfig;
 pub struct CoordinatesMatchPredictor(ImagePairClassifierPredictor);
 
 impl CoordinatesMatchPredictor {
     /// Create a new instance of the CoordinatesMatchPredictor
-    pub fn new(args: &BootArgs) -> Result<Self> {
+    pub fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(ImagePairClassifierPredictor::new(
             "coordinatesmatch.onnx",
-            args,
+            config,
             false,
         )?))
     }

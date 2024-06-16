@@ -6,12 +6,12 @@ use std::str::FromStr;
 use std::sync::Arc;
 
 use self::solver::Solver;
-use self::task::{Task, TaskResult};
+use self::task::Task;
 use crate::error::Error;
-use crate::model::{Predictor, TypedChallenge};
+use crate::onnx::{ONNXConfig, Predictor, Variant};
 use crate::serve::solver::SolverType;
 use crate::Result;
-use crate::{model, BootArgs};
+use crate::{onnx, BootArgs};
 use axum::extract::State;
 use axum::response::{Html, IntoResponse};
 use axum::routing::post;
@@ -20,19 +20,20 @@ use axum_server::tls_rustls::RustlsConfig;
 use axum_server::Handle;
 use image::DynamicImage;
 use rayon::iter::{IndexedParallelIterator, IntoParallelIterator, ParallelIterator};
+pub use task::TaskResult;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
 use tracing::Level;
 
 /// Application state
-#[derive(Clone)]
 struct AppState {
-    args: BootArgs,
     // API key
     api_key: Option<String>,
     // Submit image limit
     limit: usize,
     // Fallback solver
     solver: Option<Solver>,
+    // ONNX configuration
+    onnx_config: onnx::ONNXConfig,
 }
 
 #[tokio::main]
@@ -48,9 +49,8 @@ pub async fn run(args: BootArgs) -> Result<()> {
 
     // Initialize the application state.
     let state = AppState {
-        args: args.clone(),
         api_key: args.api_key,
-        limit: args.multi_image_limit,
+        limit: args.image_limit,
         solver: match (args.fallback_solver, args.fallback_key) {
             (Some(solver), Some(key)) => Some(Solver::new(
                 SolverType::from_str(&solver)?,
@@ -59,6 +59,12 @@ pub async fn run(args: BootArgs) -> Result<()> {
                 args.fallback_image_limit,
             )),
             _ => None,
+        },
+        onnx_config: onnx::ONNXConfig {
+            model_dir: args.model_dir,
+            update_check: args.update_check,
+            num_threads: args.num_threads,
+            allocator: args.allocator,
         },
     };
 
@@ -110,10 +116,10 @@ async fn task(
     // Validate the task
     validate_task(&state, &task)?;
 
-    // If the model type is valid, use fallback solver
-    if let Ok(model) = TypedChallenge::from_str(task.game_variant_instructions.0.as_str()) {
+    // If the variant is valid, use fallback solver
+    if let Ok(model) = Variant::from_str(task.game_variant_instructions.0.as_str()) {
         // handle the solver task
-        handle_solver_task(&state.args, task, model).await
+        handle_solver_task(&state.onnx_config, task, model).await
     } else {
         // handle the fallback solver task
         handle_fallback_solver_task(&state, task).await
@@ -122,15 +128,15 @@ async fn task(
 
 /// Handle the model task
 async fn handle_solver_task(
-    args: &BootArgs,
+    args: &ONNXConfig,
     task: Task,
-    model: TypedChallenge,
+    model: Variant,
 ) -> Result<Json<TaskResult>> {
     // Get the model predictor
-    let predictor = model::get_predictor(model, args).await?;
+    let predictor = onnx::get_predictor(model, args).await?;
 
     // Handle the single or multiple image task
-    let objects = if task.images.len() == 1 {
+    let answers = if task.images.len() == 1 {
         handle_single_image_task(&task.images[0], predictor)?
     } else {
         handle_multiple_images_task(task.images, predictor)?
@@ -139,7 +145,7 @@ async fn handle_solver_task(
     let result = TaskResult {
         error: None,
         solved: true,
-        objects,
+        objects: Some(answers),
     };
     Ok(Json(result))
 }
@@ -220,7 +226,7 @@ async fn handle_fallback_solver_task(
     let result = TaskResult {
         error: None,
         solved: true,
-        objects: answers,
+        objects: Some(answers),
     };
 
     Ok(Json(result))

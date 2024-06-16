@@ -130,7 +130,7 @@ pub fn status() -> Result<()> {
                 .processes()
                 .iter()
                 .find(|(raw_pid, _)| raw_pid.as_u32().eq(&(pid as u32)))
-                .ok_or_else(|| anyhow::anyhow!("fcsrv is not running"))?;
+                .ok_or_else(|| crate::error::Error::NotRunning)?;
 
             println!("{:<6} {:<6}  {:<6}", "PID", "CPU(%)", "MEM(MB)");
             println!(

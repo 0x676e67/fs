@@ -1,8 +1,7 @@
-use anyhow::Result;
 use clap::Parser;
 use fcsrv::{daemon, update, Commands, Opt};
 
-fn main() -> crate::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::parse();
 
     match opt.commands {
