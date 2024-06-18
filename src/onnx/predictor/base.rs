@@ -58,7 +58,7 @@ impl ImagePairClassifierPredictor {
             "input_right" => right,
         }?;
 
-        let outputs = self.0.0.run(inputs)?;
+        let outputs = self.0 .0.run(inputs)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
             .into_owned()
@@ -74,10 +74,10 @@ impl ImagePairClassifierPredictor {
         let mut max_prediction = f32::NEG_INFINITY;
         let width = image.width();
         let mut max_index = 0;
-        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.0.1)?;
+        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.0 .1)?;
 
         for i in 0..(width / 200) {
-            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.0.1)?;
+            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.0 .1)?;
             let prediction = self.run_prediction(left.clone(), right)?;
             let prediction_value = prediction[0];
             if prediction_value > max_prediction {
