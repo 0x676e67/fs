@@ -1,5 +1,5 @@
-[![CI](https://github.com/0x676e67/fs/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/ci.yml)
-[![CI](https://github.com/0x676e67/fs/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/vproxy/actions/workflows/release.yml)
+[![CI](https://github.com/0x676e67/fs/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/fs/actions/workflows/ci.yml)
+[![CI](https://github.com/0x676e67/fs/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/fs/actions/workflows/release.yml)
 <a target="_blank" href="https://github.com/0x676e67/fs/blob/main/LICENSE">
 <img src="https://img.shields.io/badge/MIT-blue.svg"/>
 </a>
@@ -17,7 +17,7 @@ ArkoseLabs funcaptcha challenge solver server
 - If you are willing to provide more types of images to help me train the model, please contact me: <gngppz@gmail.com>
 - Please provide the corresponding array index answer for the image dataset
 
-### Features
+## Features
 
 `Option execution provider`
 
@@ -27,20 +27,20 @@ ArkoseLabs funcaptcha challenge solver server
 - CoreML (Apple)
 - DirectML (Windows)
 
-### Supported challenges
+## Supported challenges
 
 variants: `3d_rollball_animals`, `3d_rollball_objects`, `hopscotch_highsec`, `coordinatesmatch`, `train_coordinates`, `BrokenJigsawbrokenjigsaw_swap`, `shadows`, `penguins`, `frankenhead`, `counting`, `knotsCrossesCircle`, `hand_number_puzzle`, `card`, `rockstack`, `cardistance`, `penguins-icon`, `conveyor`, `unbentobjects`, `3d_rollball_animals_multi`, `dice_pair`, `lumber-length-game`, `numericalmatch`, `dicematch`
 
-### Sponsors
+## Sponsors
 
-#### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
+### [Capsolver](https://capsolver.com?utm_source=github&utm_medium=banner_github&utm_campaign=funcaptcha_challenger)
 
-[![Capsolver](docs/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs)
+[![Capsolver](.github/sponsor/capsolver/capsolver.jpeg)](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs)
 
 [Capsolver.com](https://www.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs) is an AI-powered service that specializes in solving various types of captchas automatically. It supports captchas such as [reCAPTCHA V2](https://docs.capsolver.com/guide/captcha/ReCaptchaV2.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [reCAPTCHA V3](https://docs.capsolver.com/guide/captcha/ReCaptchaV3.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [hCaptcha](https://docs.capsolver.com/guide/captcha/HCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [FunCaptcha](https://docs.capsolver.com/guide/captcha/FunCaptcha.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [DataDome](https://docs.capsolver.com/guide/captcha/DataDome.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [AWS Captcha](https://docs.capsolver.com/guide/captcha/awsWaf.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [Geetest](https://docs.capsolver.com/guide/captcha/Geetest.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), and Cloudflare [Captcha](https://docs.capsolver.com/guide/antibots/cloudflare_turnstile.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs) / [Challenge 5s](https://docs.capsolver.com/guide/antibots/cloudflare_challenge.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), [Imperva / Incapsula](https://docs.capsolver.com/guide/antibots/imperva.html?utm_source=github&utm_medium=banner_github&utm_campaign=fs), among others.
 For developers, Capsolver offers API integration options detailed in their [documentation](https://docs.capsolver.com/?utm_source=github&utm_medium=banner_github&utm_campaign=fs), facilitating the integration of captcha solving into applications. They also provide browser extensions for [Chrome](https://chromewebstore.google.com/detail/captcha-solver-auto-captc/pgojnojmmhpofjgdmaebadhbocahppod) and [Firefox](https://addons.mozilla.org/es/firefox/addon/capsolver-captcha-solver/), making it easy to use their service directly within a browser. Different pricing packages are available to accommodate varying needs, ensuring flexibility for users.
 
-### Usage
+## Usage
 
 > Parallel image processing is enabled by default. If your CPU is very weak (referring to 0.1 CPU), please do not use it.
 
@@ -118,7 +118,7 @@ Options:
           Print help
 ```
 
-### Examples
+## Examples
 
 Run on docker
 
@@ -131,8 +131,8 @@ docker run --rm -it -p 8000:8000 --name=fs \
 Run on Ubuntu/Debian
 
 ```shell
-wget https://github.com/0x676e67/fs/releases/download/v0.2.1/fs-0.2.1-x86_64-unknown-linux-gnu.tar.gz
-tar -xf fs-0.2.1-x86_64-unknown-linux-gnu.tar.gz
+wget https://github.com/0x676e67/fs/releases/download/v0.3.0/fs-0.3.0-x86_64-unknown-linux-gnu.tar.gz
+tar -xf fs-0.3.0-x86_64-unknown-linux-gnu.tar.gz
 mv ./fs /bin/fs
 
 # Update the application

@@ -4,14 +4,14 @@ use fs::onnx::Variant;
 async fn main() {
     let args = Default::default();
 
-    let predictor = fs::onnx::get_predictor(Variant::Counting, &args)
+    let predictor = fs::onnx::get_predictor(Variant::Frankenhead, &args)
         .await
         .unwrap();
 
     let image_file =
-        std::fs::read("docs/counting/0a1d5e94-8187-4124-a999-3ab7af6cb5e3.jpg").unwrap();
+        std::fs::read("frankenhead/0a645367c6d7857122a66b43e9cb6e1d.jpg").unwrap();
     let guess = predictor
         .predict(image::load_from_memory(&image_file).unwrap())
         .unwrap();
-    assert_eq!(guess, 0);
+    assert_eq!(guess, 4);
 }

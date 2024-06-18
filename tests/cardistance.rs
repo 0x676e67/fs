@@ -3,16 +3,17 @@ use fs::onnx::Variant;
 #[tokio::main]
 async fn main() {
     let args = Default::default();
-    let predictor = fs::onnx::get_predictor(Variant::PenguinsIcon, &args)
+
+    let predictor = fs::onnx::get_predictor(Variant::Cardistance, &args)
         .await
         .unwrap();
 
     let image_file = std::fs::read(
-        "docs/penguins-icon/0a36f4aedb149bd1aa28f26094799253f7c8228ae0cf49c4c72f6a4e76b2782f.jpg",
+        "cardistance/0a969ea283f3d76599e4a5d85aa8ca3db4dbf45ac8166ba8fe5915533e2c149b.jpg",
     )
     .unwrap();
     let guess = predictor
         .predict(image::load_from_memory(&image_file).unwrap())
         .unwrap();
-    assert_eq!(guess, 4)
+    assert_eq!(guess, 7);
 }
