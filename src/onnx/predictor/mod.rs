@@ -16,6 +16,7 @@ pub mod lumber_length_game;
 pub mod m3d_rollball_animals_multi;
 pub mod m3d_rollball_objects;
 pub mod numericalmatch;
+pub mod orbit_match_game;
 pub mod penguins;
 pub mod penguins_icon;
 pub mod rockstack;
