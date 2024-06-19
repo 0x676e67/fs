@@ -1,7 +1,7 @@
 use fs::onnx::Variant;
 
-#[tokio::main]
-async fn main() {
+#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+async fn test() {
     let args = Default::default();
 
     let predictor = fs::onnx::get_predictor(Variant::Cardistance, &args)
@@ -9,7 +9,7 @@ async fn main() {
         .unwrap();
 
     let image_file = std::fs::read(
-        "cardistance/0a969ea283f3d76599e4a5d85aa8ca3db4dbf45ac8166ba8fe5915533e2c149b.jpg",
+        "tests/data/cardistance/0a969ea283f3d76599e4a5d85aa8ca3db4dbf45ac8166ba8fe5915533e2c149b.jpg",
     )
     .unwrap();
     let guess = predictor

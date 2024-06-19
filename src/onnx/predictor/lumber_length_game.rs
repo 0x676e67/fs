@@ -1,14 +1,14 @@
-use super::{base::ImageClassifierPredictor, Predictor};
+use super::{base::ImagePairClassifierPredictor, Predictor};
 use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
 
-pub struct LumberLengthGamePredictor(ImageClassifierPredictor);
+pub struct LumberLengthGamePredictor(ImagePairClassifierPredictor);
 
 impl LumberLengthGamePredictor {
     /// Create a new instance of the LumberLengthGamePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("lumber-length-game.onnx", config).await?,
+            ImagePairClassifierPredictor::new("lumber-length-game.onnx", config, false).await?,
         ))
     }
 }
