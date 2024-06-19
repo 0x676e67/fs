@@ -2,18 +2,18 @@ use super::{base::ImagePairClassifierPredictor, Predictor};
 use crate::{onnx::ONNXConfig, Result};
 use image::DynamicImage;
 
-pub struct LumberLengthGamePredictor(ImagePairClassifierPredictor);
+pub struct OrbitMatchGamePredictor(ImagePairClassifierPredictor);
 
-impl LumberLengthGamePredictor {
-    /// Create a new instance of the LumberLengthGamePredictor
+impl OrbitMatchGamePredictor {
+    /// Create a new instance of the OrbitMatchGamePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("lumber-length-game.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("orbit_match_game.onnx", config, false).await?,
         ))
     }
 }
 
-impl Predictor for LumberLengthGamePredictor {
+impl Predictor for OrbitMatchGamePredictor {
     fn predict(&self, image: DynamicImage) -> Result<i32> {
         self.0.predict(image)
     }

@@ -1,7 +1,7 @@
 use fs::onnx::Variant;
 
-#[tokio::main]
-async fn main() {
+#[tokio::test(flavor = "multi_thread", worker_threads = 1)]
+async fn test() {
     let args = Default::default();
     let predictor = fs::onnx::get_predictor(Variant::Shadows, &args)
         .await
@@ -11,7 +11,7 @@ async fn main() {
     // shadows/
     // 0bf82e3c5abec9553e21c8a8515d7b6f3d94545eff465d9f5ff4e23fb07b0741_1.jpg
     let image_file = std::fs::read(
-        "shadows/0bf82e3c5abec9553e21c8a8515d7b6f3d94545eff465d9f5ff4e23fb07b0741_1.jpg",
+        "tests/data/shadows/0bf82e3c5abec9553e21c8a8515d7b6f3d94545eff465d9f5ff4e23fb07b0741_1.jpg",
     )
     .unwrap();
     let guess = predictor
@@ -23,7 +23,7 @@ async fn main() {
     // shadows/
     // 0d1dd3dcfa12b88027135334db1b08a824adfbc0688200324d935043e121e7b7_3.jpg
     let image_file = std::fs::read(
-        "shadows/0d1dd3dcfa12b88027135334db1b08a824adfbc0688200324d935043e121e7b7_3.jpg",
+        "tests/data/shadows/0d1dd3dcfa12b88027135334db1b08a824adfbc0688200324d935043e121e7b7_3.jpg",
     )
     .unwrap();
     let guess = predictor

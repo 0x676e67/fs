@@ -26,6 +26,7 @@ pub enum Variant {
     Unbentobjects,
     LumberLengthGame,
     DicePair,
+    OrbitMatchGame,
 }
 
 impl TryFrom<&Task> for Variant {
@@ -35,6 +36,7 @@ impl TryFrom<&Task> for Variant {
         let variant = match task.game_variant_instructions.0.as_str() {
             "3d_rollball_animals" => Variant::M3dRollballAnimals,
             "3d_rollball_objects" => Variant::M3dRollballObjects,
+            "3d_rollball_animals_multi" => Variant::M3dRollballAnimalsMulti,
             "coordinatesmatch" => Variant::Coordinatesmatch,
             "hopscotch_highsec" => Variant::HopscotchHighsec,
             "train_coordinates" => Variant::TrainCoordinates,
@@ -55,7 +57,7 @@ impl TryFrom<&Task> for Variant {
             "unbentobjects" => Variant::Unbentobjects,
             "lumber-length-game" => Variant::LumberLengthGame,
             "dice_pair" => Variant::DicePair,
-            "3d_rollball_animals_multi" => Variant::M3dRollballAnimalsMulti,
+            "orbit_match_game" => Variant::OrbitMatchGame,
             _ => Err(Error::UnknownVariantType(
                 task.game_variant_instructions.0.clone(),
             ))?,
