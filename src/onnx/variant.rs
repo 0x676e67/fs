@@ -27,6 +27,7 @@ pub enum Variant {
     LumberLengthGame = 21,
     DicePair = 22,
     OrbitMatchGame = 23,
+    Diceico = 24,
 }
 
 impl Variant {
@@ -65,6 +66,7 @@ impl TryFrom<&Task> for Variant {
             "lumber-length-game" => Variant::LumberLengthGame,
             "dice_pair" => Variant::DicePair,
             "orbit_match_game" => Variant::OrbitMatchGame,
+            "diceico" => Variant::Diceico,
             _ => Err(Error::UnknownVariantType(
                 task.game_variant_instructions.0.clone(),
             ))?,

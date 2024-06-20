@@ -9,7 +9,7 @@ use predictor::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
     cardistance::CardistancePredictor, conveyor::ConveyorPredictor,
     coordinatesmatch::CoordinatesMatchPredictor, counting::CountingPredictor,
-    dice_pair::DicePairPredictor, dicematch::DicematchMatchPredictor,
+    dice_pair::DicePairPredictor, diceico::DiceicoPredictor, dicematch::DicematchMatchPredictor,
     frankenhead::FrankenheadPredictor, hand_number_puzzle::HandNumberPuzzlePredictor,
     hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
@@ -65,6 +65,7 @@ impl Default for ONNXConfig {
 /// ```
 pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<dyn Predictor>> {
     match variant {
+        Variant::Diceico => get_predictor_from_cell(|| DiceicoPredictor::new(config)).await,
         Variant::OrbitMatchGame => {
             get_predictor_from_cell(|| OrbitMatchGamePredictor::new(config)).await
         }
