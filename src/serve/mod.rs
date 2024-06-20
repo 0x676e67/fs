@@ -49,8 +49,6 @@ pub async fn run(args: BootArgs) -> Result<()> {
     tracing::info!("Update check: {}", args.update_check);
     tracing::info!("Threads: {}", args.num_threads);
     tracing::info!("Allocator: {:?}", args.allocator);
-    tracing::info!("Fallback solver: {:?}", args.fallback_solver);
-    tracing::info!("ONNX store: {:?}", args.store);
 
     // Initialize the application state.
     let state = AppState {

@@ -37,17 +37,17 @@ pub enum ONNXFetchConfig {
         #[clap(short, long)]
         bucket_name: String,
 
-        /// The URI of the Cloudflare KV.
-        #[clap(short, long)]
-        cloudflare_kv_uri: String,
+        /// The URL of the Cloudflare KV.
+        #[clap(short = 'l', long)]
+        url: String,
 
         /// The client ID of the Cloudflare KV.
-        #[clap(short, long)]
-        cloudflare_kv_client_id: String,
+        #[clap(short = 'c', long)]
+        client_id: String,
 
         /// The secret of the Cloudflare KV.
-        #[clap(short, long)]
-        cloudflare_kv_secret: String,
+        #[clap(short = 's', long)]
+        secret: String,
     },
     /// Represents the Github storage option.
     Github,
@@ -69,9 +69,9 @@ impl ONNXFetch {
         match onnx_store {
             ONNXFetchConfig::R2 {
                 bucket_name,
-                cloudflare_kv_uri,
-                cloudflare_kv_client_id,
-                cloudflare_kv_secret,
+                url: cloudflare_kv_uri,
+                client_id: cloudflare_kv_client_id,
+                secret: cloudflare_kv_secret,
             } => {
                 let r2 = r2::R2Store::new(
                     bucket_name,

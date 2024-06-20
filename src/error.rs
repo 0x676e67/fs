@@ -36,7 +36,7 @@ pub enum Error {
     #[error("model name is not valid: {0}")]
     InvalidModelName(String),
 
-    #[error("invalid model version info : {0}")]
+    #[error("invalid model version info: {0}")]
     InvalidModelVersionInfo(String),
 
     #[error(transparent)]
@@ -89,6 +89,8 @@ impl IntoResponse for Error {
 
             _ => StatusCode::BAD_GATEWAY,
         };
+
+        tracing::warn!("Error: {}", self);
 
         (
             status,
