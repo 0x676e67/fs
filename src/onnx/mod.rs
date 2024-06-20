@@ -21,7 +21,8 @@ use predictor::{
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
 use std::{future::Future, path::PathBuf};
-pub use store::ONNXStore;
+pub use store::ONNXFetch;
+pub use store::ONNXFetchConfig;
 pub use variant::Variant;
 
 #[derive(typed_builder::TypedBuilder)]
@@ -30,6 +31,7 @@ pub struct ONNXConfig {
     update_check: bool,
     num_threads: u16,
     allocator: ort::AllocatorType,
+    onnx_store: ONNXFetch,
 }
 
 impl Default for ONNXConfig {
@@ -39,6 +41,7 @@ impl Default for ONNXConfig {
             update_check: false,
             num_threads: 4,
             allocator: ort::AllocatorType::Arena,
+            onnx_store: Default::default(),
         }
     }
 }

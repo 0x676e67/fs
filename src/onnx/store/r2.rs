@@ -1,11 +1,13 @@
+use std::path::PathBuf;
 use std::sync::Arc;
 
+use super::Fetch;
+use crate::{constant, Result};
 use aws_config::SdkConfig;
 use aws_sdk_s3::config::Region;
 use aws_sdk_s3::Client;
+use tokio::fs;
 use tokio::sync::OnceCell;
-
-use super::Fetch;
 
 static S3_CONFIG: OnceCell<SdkConfig> = OnceCell::const_new();
 
@@ -43,34 +45,6 @@ impl R2Store {
             client: Arc::new(aws_sdk_s3::Client::new(s3_config)),
         }
     }
-
-    /// Get the bucket name of the R2Manager.
-    pub fn get_bucket_name(&self) -> &str {
-        &self.bucket_name
-    }
-
-    /// Get an object in Vec<u8> form.
-    pub async fn get(&self, object_name: &str) -> Option<Vec<u8>> {
-        let get_request = self
-            .client
-            .get_object()
-            .bucket(&self.bucket_name)
-            .key(object_name)
-            .send()
-            .await;
-
-        if get_request.is_ok() {
-            let result = get_request.unwrap();
-            tracing::debug!("{:?}", result);
-            tracing::info!("Got successfully {} from {}", object_name, self.bucket_name);
-            let bytes = result.body.collect().await.unwrap().into_bytes().to_vec();
-            return Some(bytes);
-        } else {
-            tracing::debug!("{:?}", get_request.unwrap_err());
-            tracing::error!("Unable to get {} from {}.", object_name, self.bucket_name);
-            None
-        }
-    }
 }
 
 impl Fetch for R2Store {
@@ -79,26 +53,43 @@ impl Fetch for R2Store {
         model_name: &'static str,
         model_dir: std::path::PathBuf,
         update_check: bool,
-    ) -> crate::Result<String> {
+    ) -> Result<PathBuf> {
         // Create model directory if it does not exist
         if !model_dir.exists() {
             tracing::info!("creating model directory: {}", model_dir.display());
-            tokio::fs::create_dir_all(&model_dir).await?;
+            fs::create_dir_all(&model_dir).await?;
         }
 
-        let model_filename = format!("{}/{}", model_dir.display(), model_name);
+        // Build version info path
+        let version_info_path = model_dir.join(constant::VERSION_INFO);
 
-        // Create parent directory if it does not exist
-        if let Some(parent_dir) = std::path::Path::new(&model_filename).parent() {
-            if !parent_dir.exists() {
-                tokio::fs::create_dir_all(parent_dir).await?;
-            }
+        // Build model url
+        let model_url =
+            format!("https://github.com/0x676e67/fs/releases/download/model/{model_name}");
+
+        // check version.json is exist
+        if version_info_path.exists() && update_check {
+            tracing::info!("deleting {}", version_info_path.display());
+            fs::remove_file(&version_info_path).await?;
         }
 
-        let model = self.get(model_name).await.unwrap();
+        // Build model file path
+        let model_file = model_dir.join(model_name);
 
-        tokio::fs::write(&model_filename, &model).await?;
+        let resp = self
+            .client
+            .get_object()
+            .bucket(&self.bucket_name)
+            .key(model_name)
+            .send()
+            .await
+            .map_err(|e| {
+                tracing::error!("Failed to get object: {}", e);
+                crate::Error::CloudflareR2SdkError(e.to_string())
+            })?;
 
-        Ok(model_filename)
+        // tokio::fs::write(&model_filename, resp.body).await?;
+
+        Ok(PathBuf::new())
     }
 }

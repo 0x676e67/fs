@@ -1,6 +1,8 @@
 pub mod github;
 pub mod r2;
 
+use std::path::PathBuf;
+
 use crate::Result;
 use clap::Subcommand;
 use sha2::{Digest, Sha256};
@@ -22,13 +24,13 @@ pub trait Fetch {
         model_name: &'static str,
         model_dir: std::path::PathBuf,
         update_check: bool,
-    ) -> Result<String>;
+    ) -> Result<PathBuf>;
 }
 
 /// Enum representing the ONNX model storage options.
 /// Currently, there are two options: R2 and Github.
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
-pub enum ONNXStore {
+pub enum ONNXFetchConfig {
     /// Represents the CloudFlare R2 storage option.
     R2 {
         /// The name of the bucket.
@@ -51,21 +53,21 @@ pub enum ONNXStore {
     Github,
 }
 
-impl Default for ONNXStore {
+impl Default for ONNXFetchConfig {
     fn default() -> Self {
-        ONNXStore::Github
+        ONNXFetchConfig::Github
     }
 }
 
-pub enum FetchStore {
+pub enum ONNXFetch {
     R2(r2::R2Store),
     Github(github::GithubStore),
 }
 
-impl FetchStore {
-    pub async fn new(onnx_store: ONNXStore) -> Self {
+impl ONNXFetch {
+    pub async fn new(onnx_store: ONNXFetchConfig) -> Self {
         match onnx_store {
-            ONNXStore::R2 {
+            ONNXFetchConfig::R2 {
                 bucket_name,
                 cloudflare_kv_uri,
                 cloudflare_kv_client_id,
@@ -78,23 +80,29 @@ impl FetchStore {
                     cloudflare_kv_secret,
                 )
                 .await;
-                FetchStore::R2(r2)
+                ONNXFetch::R2(r2)
             }
-            ONNXStore::Github => FetchStore::Github(github::GithubStore),
+            ONNXFetchConfig::Github => ONNXFetch::Github(github::GithubStore),
         }
     }
 }
 
-impl Fetch for FetchStore {
+impl Default for ONNXFetch {
+    fn default() -> Self {
+        ONNXFetch::Github(github::GithubStore)
+    }
+}
+
+impl Fetch for ONNXFetch {
     async fn fetch_model(
         &self,
         model_name: &'static str,
         model_dir: std::path::PathBuf,
         update_check: bool,
-    ) -> Result<String> {
+    ) -> Result<PathBuf> {
         match self {
-            FetchStore::R2(r2) => r2.fetch_model(model_name, model_dir, update_check).await,
-            FetchStore::Github(github) => {
+            ONNXFetch::R2(r2) => r2.fetch_model(model_name, model_dir, update_check).await,
+            ONNXFetch::Github(github) => {
                 github
                     .fetch_model(model_name, model_dir, update_check)
                     .await
@@ -103,7 +111,7 @@ impl Fetch for FetchStore {
     }
 }
 
-async fn file_sha256(filename: &str) -> Result<String> {
+async fn file_sha256(filename: &PathBuf) -> Result<String> {
     let mut file = tokio::fs::File::open(filename).await?;
     let mut sha256 = Sha256::new();
     let mut buffer = [0; 1024];

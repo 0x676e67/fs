@@ -1,4 +1,4 @@
-use crate::Result;
+use crate::{constant, error::Error, Result};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -15,67 +15,96 @@ impl Fetch for GithubStore {
         model_name: &'static str,
         model_dir: PathBuf,
         update_check: bool,
-    ) -> Result<String> {
+    ) -> Result<PathBuf> {
         // Create model directory if it does not exist
         if !model_dir.exists() {
             tracing::info!("creating model directory: {}", model_dir.display());
             fs::create_dir_all(&model_dir).await?;
         }
 
-        let model_filename = format!("{}/{model_name}", model_dir.display());
+        // Build version info path
+        let version_info_path = model_dir.join(constant::VERSION_INFO);
 
-        // Create parent directory if it does not exist
-        if let Some(parent_dir) = Path::new(&model_filename).parent() {
-            if !parent_dir.exists() {
-                fs::create_dir_all(parent_dir).await?;
-            }
-        }
-
-        let version_url = "https://github.com/0x676e67/fs/releases/download/model/version.json";
+        // Build model url
         let model_url =
-            format!("https://github.com/0x676e67/fs/releases/download/model/{model_name}",);
+            format!("https://github.com/0x676e67/fs/releases/download/model/{model_name}");
 
-        let version_json_path = format!("{}/version.json", model_dir.display());
+        // check version.json is exist
+        if version_info_path.exists() && update_check {
+            tracing::info!("deleting {}", version_info_path.display());
+            fs::remove_file(&version_info_path).await?;
+        }
 
-        // Check if version.json exists
-        let version_info = if PathBuf::from(&version_json_path).exists() {
-            let info: HashMap<String, String> =
-                serde_json::from_str(&fs::read_to_string(&version_json_path).await?)?;
-            info
-        } else {
-            download_file(version_url, &version_json_path).await?;
-            let info: HashMap<String, String> =
-                serde_json::from_str(&fs::read_to_string(version_json_path).await?)?;
-            info
-        };
+        // Build model file path
+        let model_file = model_dir.join(model_name);
 
-        if !Path::new(&model_filename).exists() || update_check {
-            download_file(&model_url, &model_filename).await?;
+        // If model file does not exist or update_check is true, download the model
+        if !model_file.exists() || update_check {
+            // Check if version.json exists
+            match version_info(&version_info_path).await {
+                Some(version_info) => {
+                    // Download model
+                    download_file(&model_url, &model_file).await?;
 
-            let expected_hash = &version_info[&model_name
-                .split('.')
-                .next()
-                .ok_or_else(|| crate::Error::InvalidModelName(model_name.to_string()))?
-                .to_string()];
+                    // Get model name without extension
+                    let model_name = model_name
+                        .split('.')
+                        .next()
+                        .ok_or_else(|| Error::InvalidModelName(model_name.to_string()))?;
 
-            let current_hash = file_sha256(&model_filename).await?;
+                    // Get expected hash from version.json
+                    let expected_hash = version_info
+                        .get(model_name)
+                        .ok_or_else(|| Error::InvalidModelVersionInfo(model_name.to_string()))?;
 
-            if expected_hash.ne(&current_hash) {
-                tracing::info!("model {} hash mismatch, downloading...", model_filename);
-                download_file(&model_url, &model_filename).await?;
+                    let current_hash = file_sha256(&model_file).await?;
+
+                    if current_hash.ne(expected_hash) {
+                        tracing::info!(
+                            "model {} hash mismatch, downloading...",
+                            model_file.display()
+                        );
+                        download_file(&model_url, &model_file).await?;
+                    }
+                }
+                None => {
+                    // Download model
+                    download_file(&model_url, &model_file).await?;
+                }
             }
         }
 
-        Ok(model_filename)
+        Ok(model_file)
     }
 }
 
-async fn download_file(url: &str, filename: &str) -> Result<()> {
+async fn version_info(version_info_path: &PathBuf) -> Option<HashMap<String, String>> {
+    // Check if version.json exists
+    let version_info: HashMap<String, String> = if version_info_path.exists() {
+        let data = fs::read_to_string(&version_info_path).await.ok()?;
+        serde_json::from_str(&data).ok()?
+    } else {
+        // Download version.json
+        download_file(constant::GITHUB_VERSION_INFO_URL, constant::VERSION_INFO)
+            .await
+            .ok()?;
+        let data = fs::read_to_string(version_info_path).await.ok()?;
+        serde_json::from_str(&data).ok()?
+    };
+
+    Some(version_info)
+}
+
+async fn download_file<P: AsRef<Path>>(url: &str, filename: P) -> Result<()> {
     let bytes = reqwest::get(url).await?.bytes().await?;
-    let mut out = fs::File::create(filename).await?;
-    tokio::io::copy(&mut bytes.as_ref(), &mut out).await?;
+    let mut out = fs::File::create(filename.as_ref()).await?;
+    let bytes_count = tokio::io::copy(&mut bytes.as_ref(), &mut out).await?;
     drop(out);
     drop(bytes);
-    tracing::info!("downloaded {} done", filename);
+    tracing::info!(
+        "downloaded {} bytes to {}",
+        bytes_count,
+        filename.as_ref().display()
+    );
     Ok(())
 }
