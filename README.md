@@ -59,9 +59,11 @@ For developers, Capsolver offers API integration options detailed in their [docu
 - `--fallback-endpoint`, Fallback solver endpoint
 - `--fallback-image-limit`, Fallback solver image limit, default 1
 
+subcommand `r2` represents the CloudFlare R2 storage option, `github` represents the Github storage option
+
 ```shell
 $ fs -h
-Funcaptcha solver server
+ArkoseLabs funcaptcha challenge solver server
 
 Usage: fs
        fs <COMMAND>
@@ -80,10 +82,19 @@ Options:
   -h, --help     Print help
   -V, --version  Print version
 
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+
 $ fs run -h
 Run server
 
-Usage: fs run [OPTIONS]
+Usage: fs run [OPTIONS] <COMMAND>
+
+Commands:
+  r2      Represents the CloudFlare R2 storage option
+  github  Represents the Github storage option
+  help    Print this message or the help of the given subcommand(s)
 
 Options:
   -d, --debug
@@ -95,19 +106,19 @@ Options:
       --tls-key <TLS_KEY>
           TLS private key file
   -A, --api-key <API_KEY>
-          API key
-  -M, --image-limit <image_limit>
+          Export API key
+  -L, --limit <LIMIT>
           Multiple image submission limits [default: 3]
   -U, --update-check
           Funcaptcha model update check
-      --model-dir <MODEL_DIR>
+  -M, --model-dir <MODEL_DIR>
           Funcaptcha model directory
-      --num-threads <NUM_THREADS>
+  -N, --num-threads <NUM_THREADS>
           Number of threads (ONNX Runtime) [default: 1]
       --allocator <ALLOCATOR>
           Execution provider allocator e.g. device, arena (ONNX Runtime) [default: device]
   -S, --fallback-solver <FALLBACK_SOLVER>
-          Fallback solver, supported: "yescaptcha / capsolver" [default: yescaptcha]
+          Fallback solver, supported: "yescaptcha / capsolver"
   -K, --fallback-key <FALLBACK_KEY>
           Fallback solver client key
   -E, --fallback-endpoint <FALLBACK_ENDPOINT>
@@ -119,43 +130,6 @@ Options:
 ```
 
 ## Examples
-
-Run on docker
-
-```shell
-docker run --rm -it -p 8000:8000 --name=fs \
-  -v $(pwd)/models:/models \
-  ghcr.io/0x676e67/fs:latest run --model-dir /models
-```
-
-Run on Ubuntu/Debian
-
-```shell
-wget https://github.com/0x676e67/fs/releases/download/v0.3.0/fs-0.3.0-x86_64-unknown-linux-gnu.tar.gz
-tar -xf fs-0.3.0-x86_64-unknown-linux-gnu.tar.gz
-mv ./fs /bin/fs
-
-# Update the application
-fs update
-
-# Run server
-fs run
-
-# Start server daemon
-fs start
-
-# Restart server daemon
-fs restart
-
-# Stop server daemon
-fs stop
-
-# Show the server daemon process
-fs ps
-
-# Show the server daemon log
-fs log
-```
 
 - Request
 

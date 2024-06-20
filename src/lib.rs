@@ -16,7 +16,7 @@ use std::{net::SocketAddr, path::PathBuf};
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Parser)]
-#[clap(author, version)]
+#[clap(author, version, about, arg_required_else_help = true)]
 #[command(args_conflicts_with_subcommands = true)]
 pub struct Opt {
     #[clap(subcommand)]
