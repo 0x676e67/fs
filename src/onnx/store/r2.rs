@@ -5,7 +5,6 @@ use std::sync::Arc;
 use super::{file_sha256, Fetch};
 use crate::error::Error;
 use crate::{constant, Result};
-use aws_config::timeout::TimeoutConfig;
 use aws_config::{BehaviorVersion, SdkConfig};
 use aws_sdk_s3::config::{Credentials, Region, SharedCredentialsProvider};
 use aws_sdk_s3::Client;
@@ -39,12 +38,6 @@ impl R2Store {
                     .into_builder()
                     .endpoint_url(url)
                     .credentials_provider(SharedCredentialsProvider::new(creds))
-                    .timeout_config(
-                        TimeoutConfig::builder()
-                            .connect_timeout(std::time::Duration::from_secs(10))
-                            .read_timeout(std::time::Duration::from_secs(10))
-                            .build(),
-                    )
                     .region(Region::new("auto"))
                     .build()
             })
