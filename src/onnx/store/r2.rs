@@ -82,10 +82,7 @@ impl R2Store {
             .key(key)
             .send()
             .await
-            .map_err(|e| {
-                tracing::error!("Failed to get object: {}", e);
-                crate::Error::CloudflareR2SdkError(e.to_string())
-            })?;
+            .map_err(|e| Error::CloudflareR2SdkError(e.to_string()))?;
 
         // IntoAsyncRead is implemented for `impl AsyncRead + Unpin + Send + Sync`
         let mut stream = resp.body.into_async_read();
