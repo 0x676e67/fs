@@ -33,6 +33,9 @@ struct AppState {
 
 #[tokio::main]
 pub async fn run(args: BootArgs) -> Result<()> {
+    // Disable the AWS SDK's default region detection.
+    std::env::set_var("AWS_REGION", "us-west-2");
+
     // Initialize the logger.
     tracing_subscriber::fmt()
         .with_max_level(if args.debug {
@@ -49,8 +52,6 @@ pub async fn run(args: BootArgs) -> Result<()> {
     tracing::info!("Update check: {}", args.update_check);
     tracing::info!("Threads: {}", args.num_threads);
     tracing::info!("Allocator: {:?}", args.allocator);
-    tracing::info!("Fallback solver: {:?}", args.fallback_solver);
-    tracing::info!("ONNX store: {:?}", args.store);
 
     // Initialize the application state.
     let state = AppState {

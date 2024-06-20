@@ -40,35 +40,31 @@ impl Fetch for GithubStore {
 
         // If model file does not exist or update_check is true, download the model
         if !model_file.exists() || update_check {
-            // Check if version.json exists
-            match version_info(&version_info_path).await {
-                Some(version_info) => {
-                    // Download model
-                    download_file(&model_url, &model_file).await?;
+            // Download model
+            download_file(&model_url, &model_file).await?;
+        }
 
-                    // Get model name without extension
-                    let model_name = model_name
-                        .split('.')
-                        .next()
-                        .ok_or_else(|| Error::InvalidModelName(model_name.to_string()))?;
+        // If update_check is true, check the hash of the model
+        if update_check {
+            if let Some(version_info) = version_info(&version_info_path).await {
+                // Get model name without extension
+                let model_name = model_name
+                    .split('.')
+                    .next()
+                    .ok_or_else(|| Error::InvalidModelName(model_name.to_string()))?;
 
-                    // Get expected hash from version.json
-                    let expected_hash = version_info
-                        .get(model_name)
-                        .ok_or_else(|| Error::InvalidModelVersionInfo(model_name.to_string()))?;
+                // Get expected hash from version.json
+                let expected_hash = version_info
+                    .get(model_name)
+                    .ok_or_else(|| Error::InvalidModelVersionInfo(model_name.to_string()))?;
 
-                    let current_hash = file_sha256(&model_file).await?;
+                let current_hash = file_sha256(&model_file).await?;
 
-                    if current_hash.ne(expected_hash) {
-                        tracing::info!(
-                            "model {} hash mismatch, downloading...",
-                            model_file.display()
-                        );
-                        download_file(&model_url, &model_file).await?;
-                    }
-                }
-                None => {
-                    // Download model
+                if current_hash.ne(expected_hash) {
+                    tracing::info!(
+                        "model {} hash mismatch, downloading...",
+                        model_file.display()
+                    );
                     download_file(&model_url, &model_file).await?;
                 }
             }
