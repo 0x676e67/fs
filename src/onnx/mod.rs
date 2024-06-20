@@ -1,4 +1,5 @@
 mod predictor;
+mod store;
 mod util;
 mod variant;
 
@@ -20,34 +21,8 @@ use predictor::{
     train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
 use std::{future::Future, path::PathBuf};
-use tokio::sync::OnceCell;
+pub use store::ONNXStore;
 pub use variant::Variant;
-
-static M3D_ROLLBALL_PREDICTOR: OnceCell<M3DRotationPredictor> = OnceCell::const_new();
-static COORDINATES_MATCH_PREDICTOR: OnceCell<CoordinatesMatchPredictor> = OnceCell::const_new();
-static HOPSCOTCH_HIGHSEC_PREDICTOR: OnceCell<HopscotchHighsecPredictor> = OnceCell::const_new();
-static TRAIN_COORDINATES_PREDICTOR: OnceCell<TrainCoordinatesPredictor> = OnceCell::const_new();
-static PENGUIN_PREDICTOR: OnceCell<PenguinsPredictor> = OnceCell::const_new();
-static SHADOWS_PREDICTOR: OnceCell<ShadowsPredictor> = OnceCell::const_new();
-static BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL: OnceCell<BrokenJigsawbrokenjigsaw_swap> =
-    OnceCell::const_new();
-static FRANKENHEAD_PREDICTOR: OnceCell<FrankenheadPredictor> = OnceCell::const_new();
-static COUNTING_PREDICTOR: OnceCell<CountingPredictor> = OnceCell::const_new();
-static CARD_PREDICTOR: OnceCell<CardPredictor> = OnceCell::const_new();
-static ROCKSTACK_PREDICTOR: OnceCell<RockstackPredictor> = OnceCell::const_new();
-static CARDISTANCE_PREDICTOR: OnceCell<CardistancePredictor> = OnceCell::const_new();
-static PENGUINS_ICON_PREDICTOR: OnceCell<PenguinsIconPredictor> = OnceCell::const_new();
-static KNOTS_CROSSES_CIRCLE_PREDICTOR: OnceCell<KnotsCrossesCirclePredictor> =
-    OnceCell::const_new();
-static HAND_NUMBER_PUZZLE_PREDICTOR: OnceCell<HandNumberPuzzlePredictor> = OnceCell::const_new();
-static DICEMATCH_PREDICTOR: OnceCell<DicematchMatchPredictor> = OnceCell::const_new();
-static NUMERICALMATCH_PREDICTOR: OnceCell<NumericalmatchPredictor> = OnceCell::const_new();
-static CONVEYOR_PREDICTOR: OnceCell<ConveyorPredictor> = OnceCell::const_new();
-static UNBENTOBJECTS_PREDICTOR: OnceCell<UnbentobjectsPredictor> = OnceCell::const_new();
-static LUMBER_LENGTH_GAME_PREDICTOR: OnceCell<LumberLengthGamePredictor> = OnceCell::const_new();
-static DICE_PAIR_PREDICTOR: OnceCell<DicePairPredictor> = OnceCell::const_new();
-static M3D_ROLLBALL_MULTI_PREDICTOR: OnceCell<M3DRotationMultiPredictor> = OnceCell::const_new();
-static ORBIT_MATCH_GAME_PREDICTOR: OnceCell<OrbitMatchGamePredictor> = OnceCell::const_new();
 
 #[derive(typed_builder::TypedBuilder)]
 pub struct ONNXConfig {
@@ -68,136 +43,84 @@ impl Default for ONNXConfig {
     }
 }
 
-/// Get the model predictor for the given variant
-pub async fn get_predictor(
-    variant: Variant,
-    config: &ONNXConfig,
-) -> Result<&'static dyn Predictor> {
+/// Creates a new model predictor based on the provided variant and configuration.
+///
+/// This function takes a variant and a reference to an ONNXConfig as parameters, and returns a Result
+/// that contains a Boxed dynamic Predictor. The specific type of the Predictor depends on the variant.
+///
+/// # Parameters
+/// * `variant`: The variant of the game for which to create a predictor.
+/// * `config`: A reference to the ONNXConfig that specifies the configuration for the predictor.
+///
+/// # Returns
+/// A Result that contains a Boxed dynamic Predictor if the predictor was successfully created, or an Error if it was not.
+///
+/// # Examples
+/// ```
+/// let config = ONNXConfig::default();
+/// let predictor = new_predictor(Variant::OrbitMatchGame, &config).await?;
+/// ```
+pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<dyn Predictor>> {
     match variant {
         Variant::OrbitMatchGame => {
-            get_predictor_from_cell(&ORBIT_MATCH_GAME_PREDICTOR, || {
-                OrbitMatchGamePredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| OrbitMatchGamePredictor::new(config)).await
         }
         Variant::M3dRollballAnimalsMulti => {
-            get_predictor_from_cell(&M3D_ROLLBALL_MULTI_PREDICTOR, || {
-                M3DRotationMultiPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| M3DRotationMultiPredictor::new(config)).await
         }
-        Variant::DicePair => {
-            get_predictor_from_cell(&DICE_PAIR_PREDICTOR, || DicePairPredictor::new(config)).await
-        }
+        Variant::DicePair => get_predictor_from_cell(|| DicePairPredictor::new(config)).await,
         Variant::LumberLengthGame => {
-            get_predictor_from_cell(&LUMBER_LENGTH_GAME_PREDICTOR, || {
-                LumberLengthGamePredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| LumberLengthGamePredictor::new(config)).await
         }
         Variant::Unbentobjects => {
-            get_predictor_from_cell(&UNBENTOBJECTS_PREDICTOR, || {
-                UnbentobjectsPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| UnbentobjectsPredictor::new(config)).await
         }
-        Variant::Conveyor => {
-            get_predictor_from_cell(&CONVEYOR_PREDICTOR, || ConveyorPredictor::new(config)).await
-        }
+        Variant::Conveyor => get_predictor_from_cell(|| ConveyorPredictor::new(config)).await,
         Variant::Numericalmatch => {
-            get_predictor_from_cell(&NUMERICALMATCH_PREDICTOR, || {
-                NumericalmatchPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| NumericalmatchPredictor::new(config)).await
         }
         Variant::M3dRollballAnimals | Variant::M3dRollballObjects => {
-            get_predictor_from_cell(&M3D_ROLLBALL_PREDICTOR, || {
-                M3DRotationPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| M3DRotationPredictor::new(config)).await
         }
         Variant::Coordinatesmatch => {
-            get_predictor_from_cell(&COORDINATES_MATCH_PREDICTOR, || {
-                CoordinatesMatchPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| CoordinatesMatchPredictor::new(config)).await
         }
         Variant::HopscotchHighsec => {
-            get_predictor_from_cell(&HOPSCOTCH_HIGHSEC_PREDICTOR, || {
-                HopscotchHighsecPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| HopscotchHighsecPredictor::new(config)).await
         }
         Variant::TrainCoordinates => {
-            get_predictor_from_cell(&TRAIN_COORDINATES_PREDICTOR, || {
-                TrainCoordinatesPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| TrainCoordinatesPredictor::new(config)).await
         }
-        Variant::Penguins => {
-            get_predictor_from_cell(&PENGUIN_PREDICTOR, || PenguinsPredictor::new(config)).await
-        }
-        Variant::Shadows => {
-            get_predictor_from_cell(&SHADOWS_PREDICTOR, || ShadowsPredictor::new(config)).await
-        }
+        Variant::Penguins => get_predictor_from_cell(|| PenguinsPredictor::new(config)).await,
+        Variant::Shadows => get_predictor_from_cell(|| ShadowsPredictor::new(config)).await,
         Variant::BrokenJigsawbrokenjigsaw_swap => {
-            get_predictor_from_cell(&BROKEN_JIGSAW_BROKEN_JIGSAW_SWAPL, || {
-                BrokenJigsawbrokenjigsaw_swap::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| BrokenJigsawbrokenjigsaw_swap::new(config)).await
         }
-        Variant::Frankenhead => {
-            get_predictor_from_cell(&FRANKENHEAD_PREDICTOR, || FrankenheadPredictor::new(config))
-                .await
-        }
-        Variant::Counting => {
-            get_predictor_from_cell(&COUNTING_PREDICTOR, || CountingPredictor::new(config)).await
-        }
-        Variant::Card => {
-            get_predictor_from_cell(&CARD_PREDICTOR, || CardPredictor::new(config)).await
-        }
-        Variant::Rockstack => {
-            get_predictor_from_cell(&ROCKSTACK_PREDICTOR, || RockstackPredictor::new(config)).await
-        }
-        Variant::Cardistance => {
-            get_predictor_from_cell(&CARDISTANCE_PREDICTOR, || CardistancePredictor::new(config))
-                .await
-        }
+        Variant::Frankenhead => get_predictor_from_cell(|| FrankenheadPredictor::new(config)).await,
+        Variant::Counting => get_predictor_from_cell(|| CountingPredictor::new(config)).await,
+        Variant::Card => get_predictor_from_cell(|| CardPredictor::new(config)).await,
+        Variant::Rockstack => get_predictor_from_cell(|| RockstackPredictor::new(config)).await,
+        Variant::Cardistance => get_predictor_from_cell(|| CardistancePredictor::new(config)).await,
         Variant::PenguinsIcon => {
-            get_predictor_from_cell(&PENGUINS_ICON_PREDICTOR, || {
-                PenguinsIconPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| PenguinsIconPredictor::new(config)).await
         }
         Variant::KnotsCrossesCircle => {
-            get_predictor_from_cell(&KNOTS_CROSSES_CIRCLE_PREDICTOR, || {
-                KnotsCrossesCirclePredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| KnotsCrossesCirclePredictor::new(config)).await
         }
         Variant::HandNumberPuzzle => {
-            get_predictor_from_cell(&HAND_NUMBER_PUZZLE_PREDICTOR, || {
-                HandNumberPuzzlePredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| HandNumberPuzzlePredictor::new(config)).await
         }
         Variant::Dicematch => {
-            get_predictor_from_cell(&DICEMATCH_PREDICTOR, || {
-                DicematchMatchPredictor::new(config)
-            })
-            .await
+            get_predictor_from_cell(|| DicematchMatchPredictor::new(config)).await
         }
     }
 }
 
-async fn get_predictor_from_cell<P, F, Fut>(
-    cell: &'static OnceCell<P>,
-    creator: F,
-) -> Result<&'static dyn Predictor>
+async fn get_predictor_from_cell<P, F, Fut>(creator: F) -> Result<Box<dyn Predictor>>
 where
     P: Predictor + 'static,
     F: FnOnce() -> Fut,
     Fut: Future<Output = Result<P>>,
 {
-    Ok(cell.get_or_try_init(creator).await? as &'static dyn Predictor)
+    Ok(Box::new(creator().await?))
 }

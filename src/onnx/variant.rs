@@ -1,32 +1,39 @@
 use crate::{error::Error, serve::Task, Result};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, proc_variant::EnumVariantCount)]
 pub enum Variant {
-    M3dRollballAnimals,
-    M3dRollballObjects,
-    M3dRollballAnimalsMulti,
-    Coordinatesmatch,
-    HopscotchHighsec,
-    TrainCoordinates,
-    Penguins,
-    Shadows,
+    M3dRollballAnimals = 0,
+    M3dRollballObjects = 1,
+    M3dRollballAnimalsMulti = 2,
+    Coordinatesmatch = 3,
+    HopscotchHighsec = 4,
+    TrainCoordinates = 5,
+    Penguins = 6,
+    Shadows = 7,
     #[allow(non_camel_case_types)]
-    BrokenJigsawbrokenjigsaw_swap,
-    Frankenhead,
-    Counting,
-    Card,
-    Rockstack,
-    Cardistance,
-    PenguinsIcon,
-    KnotsCrossesCircle,
-    HandNumberPuzzle,
-    Dicematch,
-    Numericalmatch,
-    Conveyor,
-    Unbentobjects,
-    LumberLengthGame,
-    DicePair,
-    OrbitMatchGame,
+    BrokenJigsawbrokenjigsaw_swap = 8,
+    Frankenhead = 9,
+    Counting = 10,
+    Card = 11,
+    Rockstack = 12,
+    Cardistance = 13,
+    PenguinsIcon = 14,
+    KnotsCrossesCircle = 15,
+    HandNumberPuzzle = 16,
+    Dicematch = 17,
+    Numericalmatch = 18,
+    Conveyor = 19,
+    Unbentobjects = 20,
+    LumberLengthGame = 21,
+    DicePair = 22,
+    OrbitMatchGame = 23,
+}
+
+impl Variant {
+    /// Returns the number of variants in the enum.
+    pub const fn const_count() -> usize {
+        LENGTH
+    }
 }
 
 impl TryFrom<&Task> for Variant {

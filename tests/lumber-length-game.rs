@@ -4,7 +4,7 @@ use fs::onnx::Variant;
 async fn my_test() {
     let args = Default::default();
 
-    let predictor = fs::onnx::get_predictor(Variant::LumberLengthGame, &args)
+    let predictor = fs::onnx::new_predictor(Variant::LumberLengthGame, &args)
         .await
         .unwrap();
 
