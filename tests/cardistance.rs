@@ -4,7 +4,7 @@ use fs::onnx::Variant;
 async fn test() {
     let args = Default::default();
 
-    let predictor = fs::onnx::get_predictor(Variant::Cardistance, &args)
+    let predictor = fs::onnx::new_predictor(Variant::Cardistance, &args)
         .await
         .unwrap();
 

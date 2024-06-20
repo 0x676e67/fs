@@ -36,6 +36,9 @@ pub enum Error {
     #[error("model name is not valid: {0}")]
     InvalidModelName(String),
 
+    #[error("invalid model version info : {0}")]
+    InvalidModelVersionInfo(String),
+
     #[error(transparent)]
     ImageDecodeError(#[from] base64::DecodeError),
 
@@ -56,6 +59,9 @@ pub enum Error {
 
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
+
+    #[error("Cloudflare R2 SDK error: {0}")]
+    CloudflareR2SdkError(String),
 }
 
 impl IntoResponse for Error {

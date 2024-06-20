@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Clone)]
 pub struct Task {
     /// API key
     pub api_key: Option<String>,

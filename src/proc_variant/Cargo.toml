@@ -1,0 +1,12 @@
+[package]
+name = "proc_variant"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+proc-macro2 = "1"
+syn = "2"
+quote = "1"
+
+[lib]
+proc-macro = true

@@ -4,7 +4,7 @@ use fs::onnx::Variant;
 async fn test() {
     let args = Default::default();
 
-    let predictor = fs::onnx::get_predictor(Variant::Card, &args).await.unwrap();
+    let predictor = fs::onnx::new_predictor(Variant::Card, &args).await.unwrap();
 
     let image_file = std::fs::read("tests/data/card/card_1.jpg").unwrap();
     let guess = predictor

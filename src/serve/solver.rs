@@ -1,17 +1,46 @@
-use super::Task;
-use crate::{error::Error, Result};
+use super::{Task, TaskResult};
+use crate::{
+    error::Error,
+    onnx::{self, ONNXConfig, Predictor, Variant},
+    Result,
+};
+use axum::Json;
+use image::DynamicImage;
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::str::FromStr;
+use std::{str::FromStr, sync::Arc};
+use tokio::sync::OnceCell;
+use typed_builder::TypedBuilder;
+
+/// The `SolverProcess` trait defines a common interface for processing tasks.
+///
+/// This trait is intended to be implemented by different types of solvers,
+/// each of which may process tasks in a different way.
+///
+/// The `process` method takes a `Task` as input and returns a `Result`
+/// containing a `Json<TaskResult>`. This allows for flexibility in the
+/// processing logic and the format of the results.
+pub trait Solver {
+    /// Process a given task.
+    ///
+    /// # Parameters
+    /// - `task`: The task to be processed.
+    ///
+    /// # Returns
+    /// - A `Result` containing a `Json<TaskResult>` if the task is processed successfully.
+    /// - An `Error` if the task processing fails.
+    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>>;
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
-pub enum SolverType {
+pub enum TypedFallback {
     Yescaptcha,
     Capsolver,
 }
 
-impl FromStr for SolverType {
+impl FromStr for TypedFallback {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<Self> {
@@ -23,96 +52,141 @@ impl FromStr for SolverType {
     }
 }
 
-/// `Solver` is a structure that represents a solver for captcha tasks.
+/// `SolverHelper` is a struct that encapsulates the logic for handling tasks using both an ONNX model and a fallback solver.
 ///
-/// It has the following fields:
-/// - `typed`: A `SolverType` enum that represents the type of the solver. It
-///   can be either `Yescaptcha` or `Capsolver`.
-/// - `client`: A `reqwest::Client` object that is used to send HTTP requests.
-/// - `client_key`: A `String` that represents the client key for the solver
-///   API.
-/// - `limit`: A `usize` that represents the maximum number of images that can
-///   be processed in a single task.
-/// - `endpoint`: An `Option<String>` that represents the endpoint URL of the
-///   solver API. It is optional and can be `None` if the default endpoint is
-///   used.
+/// It contains an `ONNXSolver` instance, which handles tasks using an ONNX model,
+/// an optional `FallbackSolver` instance, which handles tasks using a fallback solver if the ONNX model fails,
+/// and a limit for the number of tasks that can be processed.
 ///
-/// The `Solver` structure is created using the `typed_builder::TypedBuilder`
-/// derive macro, which provides a builder pattern for creating a `Solver`
-/// object.
-#[derive(typed_builder::TypedBuilder)]
-pub struct Solver {
-    typed: SolverType,
-    client: reqwest::Client,
-    client_key: String,
+/// # Fields
+/// * `limit`: The maximum number of tasks that can be processed.
+/// * `onnx_solver`: The ONNX solver used to process tasks.
+/// * `fallback_solver`: The fallback solver used to process tasks if the ONNX solver fails.
+#[derive(TypedBuilder)]
+pub struct SolverHelper {
     limit: usize,
-    endpoint: Option<String>,
+    onnx_solver: ONNXSolver,
+    fallback_solver: Option<FallbackSolver>,
 }
 
-impl Solver {
-    /// This method is responsible for processing a task based on the solver
-    /// type.
-    ///
-    /// It takes a `Task` object as an argument, which contains the details of
-    /// the task to be processed. The task details include the game variant,
-    /// instructions, and images.
-    ///
-    /// The method initializes an empty vector `answers` to store the answers
-    /// for the task images.
-    ///
-    /// Depending on the `SolverType`, it processes the task differently:
-    /// - For `SolverType::Yescaptcha`, it processes each image individually.
-    ///   For each image, it creates a `SubmitTask` object and submits the task
-    ///   using the `submit_task` method. The answer for the task is then added
-    ///   to the `answers` vector.
-    /// - For `SolverType::Capsolver`, it splits the task images into chunks
-    ///   with a maximum size defined by `self.limit`. Each chunk of images is
-    ///   then processed as a separate task.
-    ///
-    /// This method is asynchronous and returns a `Result<Vec<i32>>`.
-    /// If the task is successfully processed, it returns a `Result` wrapping a
-    /// vector of integers representing the answers. If there is an error
-    /// during the process, it returns a `Result` wrapping an error.
-    pub async fn process(&self, task: Task) -> Result<Vec<i32>> {
-        // Get game variant and instructions
-        let (game_variant, instructions) = task.game_variant_instructions;
+impl SolverHelper {
+    /// Validate the task
+    /// This function checks if the task is valid. It takes the application state
+    /// and a task as input. It first checks if the API key is provided and matches
+    /// the one in the application state. Then it checks if the number of images in
+    /// the task is within the limit. If any of these checks fail, it returns an
+    /// error. If all checks pass, it returns Ok.
+    fn validate_task(&self, task: &Task) -> Result<()> {
+        // Check if images is empty
+        if task.images.is_empty() {
+            return Err(Error::InvalidImages);
+        }
 
-        // Answers
-        let mut answers = Vec::with_capacity(task.images.len());
+        // Check if images is greater than limit
+        if task.images.len() > self.limit {
+            return Err(Error::InvalidSubmitLimit);
+        }
 
-        match self.typed {
-            SolverType::Yescaptcha => {
-                // single image
-                for image in task.images {
-                    // submit task
-                    let task = SubmitTask::builder()
-                        .image(&image)
-                        .game_variant_instructions((&game_variant, &instructions))
-                        .build();
-                    let answer = self.submit_task(task).await?;
-                    answers.extend(answer);
-                }
-            }
-            SolverType::Capsolver => {
-                // split chunk images
-                let images_chunk = task.images.chunks(self.limit.max(1));
+        Ok(())
+    }
+}
 
-                // submit multiple images task
-                for chunk in images_chunk {
-                    // submit task
-                    let task = SubmitTask::builder()
-                        .images(chunk)
-                        .game_variant_instructions((&game_variant, &instructions))
-                        .build();
-                    let answer = self.submit_task(task).await?;
-                    answers.extend(answer);
+impl Solver for SolverHelper {
+    /// Process the task
+    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+        // Validate the task
+        self.validate_task(&task)?;
+
+        // Match the fallback solver
+        match self.fallback_solver.as_ref() {
+            // If there is no fallback solver, use the solver task
+            None => self.onnx_solver.process(task).await,
+            // If there is a fallback solver, use the fallback solver task
+            Some(fallback_solver) => {
+                // Try to use the solver task
+                let solver_result = self.onnx_solver.process(task.clone()).await;
+                match solver_result {
+                    // If the solver task is successful, return the result
+                    Ok(result) => Ok(result),
+                    // If the solver task fails, use the fallback solver task
+                    Err(_) => fallback_solver.process(task).await,
                 }
             }
         }
-
-        Ok(answers)
     }
+}
 
+/// `OnnxSolver` is a struct that encapsulates the logic for handling tasks using an ONNX model.
+///
+/// It contains an `ONNXConfig` instance, which holds the configuration for the ONNX model,
+/// and an array of `OnceCell` instances, each of which can hold a `Box<dyn Predictor>`.
+/// The `OnceCell` instances are used to lazily initialize and store the predictors for each variant.
+///
+/// # Fields
+/// * `onnx`: The ONNX model configuration.
+/// * `predictors`: An array of `OnceCell` instances, each of which can hold a `Box<dyn Predictor>`.
+#[derive(TypedBuilder)]
+pub struct ONNXSolver {
+    onnx: ONNXConfig,
+    predictors: [OnceCell<Box<dyn Predictor>>; Variant::const_count()],
+}
+
+impl Solver for ONNXSolver {
+    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+        // Try to convert the task to a variant
+        let variant = Variant::try_from(&*task)?;
+
+        // Process the task using the model
+        let predictor = self.predictors[variant as usize]
+            .get_or_try_init(|| onnx::new_predictor(variant, &self.onnx))
+            .await?;
+
+        // Process the task
+        let answers = {
+            let mut objects = task
+                .images
+                .par_iter()
+                .enumerate()
+                .map(|(index, image)| {
+                    let image = decode_image(image)?;
+                    let answer = predictor.predict(image)?;
+                    Ok((index, answer))
+                })
+                .collect::<Result<Vec<(usize, i32)>>>()?;
+
+            objects.sort_by_key(|&(index, _)| index);
+            objects.into_iter().map(|(_, answer)| answer).collect()
+        };
+
+        // If the task is successfully processed, return the answers
+        Ok(Json(
+            TaskResult::builder().solved(true).objects(answers).build(),
+        ))
+    }
+}
+
+/// `FallbackSolver` is a struct that encapsulates the logic for handling tasks using a fallback solver.
+///
+/// It contains a `TypedFallback` instance, which holds the configuration for the fallback solver,
+/// a `reqwest::Client` instance for making HTTP requests, a client key for authentication,
+/// an optional endpoint URL, and a limit for the number of tasks that can be processed.
+///
+/// # Fields
+/// * `typed`: The fallback solver configuration.
+/// * `client`: The HTTP client used to make requests to the fallback solver.
+/// * `client_key`: The client key used for authentication with the fallback solver.
+/// * `endpoint`: The endpoint URL of the fallback solver. If not provided, a default endpoint is used based on the `SolverType`.
+/// * `limit`: The maximum number of tasks that can be processed by the fallback solver.
+#[derive(TypedBuilder)]
+pub struct FallbackSolver {
+    typed: TypedFallback,
+    client: reqwest::Client,
+    client_key: String,
+    endpoint: Option<String>,
+    limit: usize,
+}
+
+impl FallbackSolver {
     /// This method is responsible for submitting a task to the solver.
     ///
     /// It takes a `SubmitTask` object as an argument, which contains the
@@ -130,7 +204,7 @@ impl Solver {
     /// process, it returns a `Result` wrapping an error.
     async fn submit_task(&self, submit_task: SubmitTask<'_>) -> Result<Vec<i32>> {
         let (endpoint, body) = match self.typed {
-            SolverType::Yescaptcha => (
+            TypedFallback::Yescaptcha => (
                 self.endpoint
                     .as_deref()
                     .unwrap_or("https://api.yescaptcha.com/createTask"),
@@ -144,7 +218,7 @@ impl Solver {
                     "softID": "26299"
                 }),
             ),
-            SolverType::Capsolver => (
+            TypedFallback::Capsolver => (
                 self.endpoint
                     .as_deref()
                     .unwrap_or("https://api.capsolver.com/createTask"),
@@ -178,6 +252,60 @@ impl Solver {
 
         Ok(task.solution.objects)
     }
+}
+
+impl Solver for FallbackSolver {
+    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+        // Get game variant and instructions
+        let (game_variant, instructions) = &task.game_variant_instructions;
+
+        // Answers
+        let mut answers = Vec::with_capacity(task.images.len());
+
+        match self.typed {
+            TypedFallback::Yescaptcha => {
+                // single image
+                for image in task.images.iter() {
+                    // submit task
+                    let task = SubmitTask::builder()
+                        .image(image)
+                        .game_variant_instructions((&game_variant, &instructions))
+                        .build();
+                    let answer = self.submit_task(task).await?;
+                    answers.extend(answer);
+                }
+            }
+            TypedFallback::Capsolver => {
+                // split chunk images
+                let images_chunk = task.images.chunks(self.limit.max(1));
+
+                // submit multiple images task
+                for chunk in images_chunk {
+                    // submit task
+                    let task = SubmitTask::builder()
+                        .images(chunk)
+                        .game_variant_instructions((&game_variant, &instructions))
+                        .build();
+                    let answer = self.submit_task(task).await?;
+                    answers.extend(answer);
+                }
+            }
+        }
+
+        Ok(Json(
+            TaskResult::builder().solved(true).objects(answers).build(),
+        ))
+    }
+}
+
+/// Decode the base64 image
+fn decode_image(base64_string: &String) -> Result<DynamicImage> {
+    // base64 decode the image
+    use base64::{engine::general_purpose, Engine as _};
+    let image_bytes = general_purpose::STANDARD
+        .decode(base64_string.split(',').nth(1).unwrap_or(base64_string))?;
+    // convert the bytes to an image
+    Ok(image::load_from_memory(&image_bytes)?)
 }
 
 #[derive(Deserialize, Default)]

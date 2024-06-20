@@ -1,4 +1,5 @@
 pub mod alloc;
+pub mod constant;
 #[cfg(target_family = "unix")]
 pub mod daemon;
 pub mod error;
@@ -15,7 +16,7 @@ use std::{net::SocketAddr, path::PathBuf};
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Parser)]
-#[clap(author, version, about, arg_required_else_help = true)]
+#[clap(author, version)]
 #[command(args_conflicts_with_subcommands = true)]
 pub struct Opt {
     #[clap(subcommand)]
@@ -68,19 +69,19 @@ pub struct BootArgs {
     pub api_key: Option<String>,
 
     /// Multiple image submission limits
-    #[clap(short = 'M', long, default_value = "3")]
-    pub image_limit: usize,
+    #[clap(short = 'L', long, default_value = "3")]
+    pub limit: usize,
 
     /// Funcaptcha model update check
     #[clap(short = 'U', long)]
     pub update_check: bool,
 
     /// Funcaptcha model directory
-    #[clap(long)]
+    #[clap(short = 'M', long)]
     pub model_dir: Option<PathBuf>,
 
     /// Number of threads (ONNX Runtime)
-    #[clap(long, default_value = "1")]
+    #[clap(short = 'N', long, default_value = "1")]
     pub num_threads: u16,
 
     /// Execution provider allocator e.g. device, arena (ONNX Runtime)
@@ -102,6 +103,9 @@ pub struct BootArgs {
     /// Fallback solver image limit
     #[clap(short = 'D', long, requires = "fallback_solver", default_value = "1")]
     pub fallback_image_limit: usize,
+
+    #[clap(subcommand)]
+    pub store: onnx::ONNXFetchConfig,
 }
 
 fn alloc_parser(s: &str) -> Result<ort::AllocatorType> {
