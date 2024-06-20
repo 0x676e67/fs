@@ -33,7 +33,7 @@ impl R2Store {
         // Load AWS SDK configuration
         let s3_config = S3_CONFIG
             .get_or_init(|| async {
-                let creds = Credentials::new(client_id, secret, None, None, "arkose-onnx");
+                let creds = Credentials::new(client_id, secret, None, None, "onnx");
                 aws_config::load_defaults(BehaviorVersion::v2024_03_28())
                     .await
                     .into_builder()

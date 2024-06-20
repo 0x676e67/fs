@@ -33,6 +33,9 @@ struct AppState {
 
 #[tokio::main]
 pub async fn run(args: BootArgs) -> Result<()> {
+    // Disable the AWS SDK's default region detection.
+    std::env::set_var("AWS_REGION", "us-west-2");
+
     // Initialize the logger.
     tracing_subscriber::fmt()
         .with_max_level(if args.debug {
