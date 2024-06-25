@@ -2,9 +2,9 @@ use crate::{error::Error, serve::Task, Result};
 
 #[derive(Debug, Clone, Copy, proc_variant::EnumVariantCount)]
 pub enum Variant {
-    M3dRollballAnimals = 0,
-    M3dRollballObjects = 1,
-    M3dRollballAnimalsMulti = 2,
+    RollballAnimals = 0,
+    RollballObjects = 1,
+    RollballAnimalsMulti = 2,
     Coordinatesmatch = 3,
     HopscotchHighsec = 4,
     TrainCoordinates = 5,
@@ -42,9 +42,9 @@ impl TryFrom<&Task> for Variant {
 
     fn try_from(task: &Task) -> Result<Self> {
         let variant = match task.game_variant_instructions.0.as_str() {
-            "3d_rollball_animals" => Variant::M3dRollballAnimals,
-            "3d_rollball_objects" => Variant::M3dRollballObjects,
-            "3d_rollball_animals_multi" => Variant::M3dRollballAnimalsMulti,
+            "3d_rollball_animals" => Variant::RollballAnimals,
+            "3d_rollball_objects" => Variant::RollballObjects,
+            "3d_rollball_animals_multi" => Variant::RollballAnimalsMulti,
             "coordinatesmatch" => Variant::Coordinatesmatch,
             "hopscotch_highsec" => Variant::HopscotchHighsec,
             "train_coordinates" => Variant::TrainCoordinates,

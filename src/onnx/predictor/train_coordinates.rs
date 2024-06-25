@@ -17,4 +17,8 @@ impl Predictor for TrainCoordinatesPredictor {
     fn predict(&self, image: DynamicImage) -> Result<i32> {
         self.0.predict(image)
     }
+
+    fn active(&self) -> bool {
+        self.0.active()
+    }
 }

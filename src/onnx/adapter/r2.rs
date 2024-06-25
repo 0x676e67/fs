@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::{file_sha256, Fetch};
+use super::{file_sha256, Adapter};
 use crate::error::Error;
 use crate::{constant, Result};
 use aws_config::{BehaviorVersion, SdkConfig};
@@ -15,12 +15,12 @@ static S3_CONFIG: OnceCell<SdkConfig> = OnceCell::const_new();
 
 /// A struct providing most necessary APIs to work with Cloudflare R2 object storage.
 #[derive(Debug, Clone)]
-pub struct R2Store {
+pub struct R2Adapter {
     bucket_name: String,
     client: Arc<Client>,
 }
 
-impl R2Store {
+impl R2Adapter {
     /// Creates a new instance of R2Manager. The region is set to us-east-1 which aliases
     /// to auto. Read more here <https://developers.cloudflare.com/r2/api/s3/api/>.
     pub async fn new(
@@ -28,7 +28,7 @@ impl R2Store {
         url: String,
         client_id: String,
         secret: String,
-    ) -> R2Store {
+    ) -> R2Adapter {
         // Load AWS SDK configuration
         let s3_config = S3_CONFIG
             .get_or_init(|| async {
@@ -43,7 +43,7 @@ impl R2Store {
             })
             .await;
 
-        R2Store {
+        R2Adapter {
             bucket_name: bucket_name.into(),
             client: Arc::new(aws_sdk_s3::Client::new(s3_config)),
         }
@@ -93,7 +93,7 @@ impl R2Store {
     }
 }
 
-impl Fetch for R2Store {
+impl Adapter for R2Adapter {
     async fn fetch_model(
         &self,
         model_name: &'static str,

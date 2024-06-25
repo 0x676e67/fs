@@ -1,7 +1,9 @@
 use crate::{
-    constant, homedir,
+    constant,
+    error::Error,
+    homedir,
     onnx::{
-        store::Fetch,
+        adapter::Adapter,
         util::{
             check_input_image_size, process_classifier_image, process_pair_classifier_ans_image,
             process_pair_classifier_image,
@@ -22,70 +24,47 @@ use ort::DirectMLExecutionProvider;
 use ort::ROCmExecutionProvider;
 use ort::{GraphOptimizationLevel, MemoryInfo, Session};
 use std::f32;
+use tokio::sync::OnceCell;
 
-pub struct ImageClassifierPredictor(Session);
-
-pub struct ImagePairClassifierPredictor((Session, bool));
+pub struct ImageClassifierPredictor {
+    session: OnceCell<Session>,
+    active: OnceCell<()>,
+}
 
 impl ImageClassifierPredictor {
     pub async fn new(onnx: &'static str, config: &ONNXConfig) -> Result<Self> {
-        Ok(Self(create_model_session(onnx, config).await?))
-    }
-}
+        let predictor = ImageClassifierPredictor {
+            session: OnceCell::new(),
+            active: OnceCell::new(),
+        };
 
-impl ImagePairClassifierPredictor {
-    pub async fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
-        Ok(Self((
-            create_model_session(onnx, config).await?,
-            is_grayscale,
-        )))
-    }
-}
+        // If the session is created successfully, set the session and wait for it to be initialized
+        match create_onnx_session(onnx, config).await {
+            Ok(session) => {
+                let _ = predictor.session.set(session);
+                let _ = predictor.active.set(());
+            }
+            Err(err) => {
+                tracing::warn!("Failed to create session: {}", err);
+            }
+        }
 
-impl ImagePairClassifierPredictor {
-    /// Run prediction on the model
-    pub fn run_prediction(&self, left: Array4<f32>, right: Array4<f32>) -> Result<Vec<f32>> {
-        let inputs = ort::inputs! {
-            "input_left" => left,
-            "input_right" => right,
-        }?;
-
-        let outputs = self.0 .0.run(inputs)?;
-        let output = outputs[0]
-            .try_extract_tensor::<f32>()?
-            .into_owned()
-            .into_iter()
-            .collect();
-        Ok(output)
+        Ok(predictor)
     }
 
     #[inline]
-    pub fn predict(&self, mut image: DynamicImage) -> Result<i32> {
-        check_input_image_size(&image)?;
-
-        let mut max_prediction = f32::NEG_INFINITY;
-        let width = image.width();
-        let mut max_index = 0;
-        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.0 .1)?;
-
-        for i in 0..(width / 200) {
-            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.0 .1)?;
-            let prediction = self.run_prediction(left.clone(), right)?;
-            let prediction_value = prediction[0];
-            if prediction_value > max_prediction {
-                max_prediction = prediction_value;
-                max_index = i;
-            }
-        }
-        Ok(max_index as i32)
+    pub fn active(&self) -> bool {
+        self.active.get().is_some()
     }
-}
 
-impl ImageClassifierPredictor {
     fn run_prediction(&self, image: Array4<f32>) -> Result<Vec<f32>> {
-        let outputs = self.0.run(ort::inputs! {
-            "input" => image,
-        }?)?;
+        let outputs = self
+            .session
+            .get()
+            .ok_or_else(|| Error::OnnxSessionNotInitialized)?
+            .run(ort::inputs! {
+                "input" => image,
+            }?)?;
         let output = outputs[0]
             .try_extract_tensor::<f32>()?
             .into_owned()
@@ -114,7 +93,82 @@ impl ImageClassifierPredictor {
     }
 }
 
-async fn create_model_session(onnx: &'static str, config: &ONNXConfig) -> Result<Session> {
+pub struct ImagePairClassifierPredictor {
+    session: OnceCell<Session>,
+    active: OnceCell<()>,
+    is_grayscale: bool,
+}
+
+impl ImagePairClassifierPredictor {
+    pub async fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
+        let predictor = ImagePairClassifierPredictor {
+            session: OnceCell::new(),
+            active: OnceCell::new(),
+            is_grayscale,
+        };
+
+        // If the session is created successfully, set the session and wait for it to be initialized
+        match create_onnx_session(onnx, config).await {
+            Ok(session) => {
+                let _ = predictor.session.set(session);
+                let _ = predictor.active.set(());
+            }
+            Err(err) => {
+                tracing::warn!("Failed to create session: {}", err);
+            }
+        }
+
+        Ok(predictor)
+    }
+
+    #[inline]
+    pub fn active(&self) -> bool {
+        self.active.get().is_some()
+    }
+
+    /// Run prediction on the model
+    pub fn run_prediction(&self, left: Array4<f32>, right: Array4<f32>) -> Result<Vec<f32>> {
+        let inputs = ort::inputs! {
+            "input_left" => left,
+            "input_right" => right,
+        }?;
+
+        let outputs = self
+            .session
+            .get()
+            .ok_or_else(|| Error::OnnxSessionNotInitialized)?
+            .run(inputs)?;
+        let output = outputs[0]
+            .try_extract_tensor::<f32>()?
+            .into_owned()
+            .into_iter()
+            .collect();
+        Ok(output)
+    }
+
+    #[inline]
+    pub fn predict(&self, mut image: DynamicImage) -> Result<i32> {
+        check_input_image_size(&image)?;
+
+        let mut max_prediction = f32::NEG_INFINITY;
+        let width = image.width();
+        let mut max_index = 0;
+        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.is_grayscale)?;
+
+        for i in 0..(width / 200) {
+            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.is_grayscale)?;
+            let prediction = self.run_prediction(left.clone(), right)?;
+            let prediction_value = prediction[0];
+            if prediction_value > max_prediction {
+                max_prediction = prediction_value;
+                max_index = i;
+            }
+        }
+        Ok(max_index as i32)
+    }
+}
+
+async fn create_onnx_session(onnx: &'static str, config: &ONNXConfig) -> Result<Session> {
     let model_dir = config
         .model_dir
         .as_ref()

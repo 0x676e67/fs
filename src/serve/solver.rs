@@ -65,7 +65,7 @@ impl FromStr for TypedFallback {
 #[derive(TypedBuilder)]
 pub struct SolverHelper {
     limit: usize,
-    onnx_solver: ONNXSolver,
+    onnx_solver: DefaultSolver,
     fallback_solver: Option<FallbackSolver>,
 }
 
@@ -104,8 +104,7 @@ impl Solver for SolverHelper {
             // If there is a fallback solver, use the fallback solver task
             Some(fallback_solver) => {
                 // Try to use the solver task
-                let solver_result = self.onnx_solver.process(task.clone()).await;
-                match solver_result {
+                match self.onnx_solver.process(task.clone()).await {
                     // If the solver task is successful, return the result
                     Ok(result) => Ok(result),
                     // If the solver task fails, use the fallback solver task
@@ -126,12 +125,12 @@ impl Solver for SolverHelper {
 /// * `onnx`: The ONNX model configuration.
 /// * `predictors`: An array of `OnceCell` instances, each of which can hold a `Box<dyn Predictor>`.
 #[derive(TypedBuilder)]
-pub struct ONNXSolver {
+pub struct DefaultSolver {
     onnx: ONNXConfig,
     predictors: [OnceCell<Box<dyn Predictor>>; Variant::const_count()],
 }
 
-impl Solver for ONNXSolver {
+impl Solver for DefaultSolver {
     async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
         // Try to convert the task to a variant
         let variant = Variant::try_from(&*task)?;
@@ -140,6 +139,11 @@ impl Solver for ONNXSolver {
         let predictor = self.predictors[variant as usize]
             .get_or_try_init(|| onnx::new_predictor(variant, &self.onnx))
             .await?;
+
+        // Check if the predictor is active
+        if !predictor.active() {
+            return Err(Error::PredictorNotActive(variant));
+        }
 
         // Process the task
         let answers = {
