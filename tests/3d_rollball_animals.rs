@@ -3,7 +3,7 @@ use fs::onnx::Variant;
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn test() {
     let args = Default::default();
-    let predictor = fs::onnx::new_predictor(Variant::M3dRollballAnimals, &args)
+    let predictor = fs::onnx::new_predictor(Variant::RollballAnimals, &args)
         .await
         .unwrap();
 

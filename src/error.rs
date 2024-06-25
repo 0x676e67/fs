@@ -1,4 +1,4 @@
-use crate::serve::TaskResult;
+use crate::{onnx::Variant, serve::TaskResult};
 use axum::{response::IntoResponse, Json};
 
 #[derive(thiserror::Error, Debug)]
@@ -62,6 +62,12 @@ pub enum Error {
 
     #[error("Cloudflare R2 SDK error: {0}")]
     CloudflareR2SdkError(String),
+
+    #[error("ONNX session not initialized")]
+    OnnxSessionNotInitialized,
+
+    #[error("Predictor: {0:?} not active")]
+    PredictorNotActive(Variant),
 }
 
 impl IntoResponse for Error {
@@ -74,6 +80,8 @@ impl IntoResponse for Error {
             | Error::OnnxError(_)
             | Error::InvalidModelName(_)
             | Error::ReqwestError(_)
+            | Error::OnnxSessionNotInitialized
+            | Error::PredictorNotActive(_)
             | Error::FallbackSolverError(_) => StatusCode::INTERNAL_SERVER_ERROR,
 
             Error::InvalidSubmitLimit

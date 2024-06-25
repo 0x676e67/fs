@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use tokio::io::AsyncReadExt;
 
 /// Trait defining the fetch operation for ONNX models.
-pub trait Fetch {
+pub trait Adapter {
     /// Asynchronously fetches an ONNX model.
     ///
     /// # Parameters
@@ -60,8 +60,8 @@ impl Default for ONNXFetchConfig {
 }
 
 pub enum ONNXFetch {
-    R2(r2::R2Store),
-    Github(github::GithubStore),
+    R2(r2::R2Adapter),
+    Github(github::GithubAdapter),
 }
 
 impl ONNXFetch {
@@ -73,7 +73,7 @@ impl ONNXFetch {
                 client_id: cloudflare_kv_client_id,
                 secret: cloudflare_kv_secret,
             } => {
-                let r2 = r2::R2Store::new(
+                let r2 = r2::R2Adapter::new(
                     bucket_name,
                     cloudflare_kv_uri,
                     cloudflare_kv_client_id,
@@ -82,18 +82,18 @@ impl ONNXFetch {
                 .await;
                 ONNXFetch::R2(r2)
             }
-            ONNXFetchConfig::Github => ONNXFetch::Github(github::GithubStore),
+            ONNXFetchConfig::Github => ONNXFetch::Github(github::GithubAdapter),
         }
     }
 }
 
 impl Default for ONNXFetch {
     fn default() -> Self {
-        ONNXFetch::Github(github::GithubStore)
+        ONNXFetch::Github(github::GithubAdapter)
     }
 }
 
-impl Fetch for ONNXFetch {
+impl Adapter for ONNXFetch {
     async fn fetch_model(
         &self,
         model_name: &'static str,

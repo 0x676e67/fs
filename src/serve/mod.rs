@@ -17,7 +17,7 @@ use axum::{
     Json, Router,
 };
 use axum_server::{tls_rustls::RustlsConfig, Handle};
-use solver::{ONNXSolver, Solver, SolverHelper};
+use solver::{DefaultSolver, Solver, SolverHelper};
 use std::{str::FromStr, sync::Arc};
 pub use task::TaskResult;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnFailure, DefaultOnResponse, TraceLayer};
@@ -59,7 +59,7 @@ pub async fn run(args: BootArgs) -> Result<()> {
         solver: SolverHelper::builder()
             .limit(args.limit)
             .onnx_solver(
-                ONNXSolver::builder()
+                DefaultSolver::builder()
                     .onnx(
                         ONNXConfig::builder()
                             .model_dir(args.model_dir)

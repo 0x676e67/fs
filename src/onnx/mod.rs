@@ -1,9 +1,11 @@
+mod adapter;
 mod predictor;
-mod store;
 mod util;
 mod variant;
 
 use crate::Result;
+pub use adapter::ONNXFetch;
+pub use adapter::ONNXFetchConfig;
 pub use predictor::Predictor;
 use predictor::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
@@ -13,16 +15,14 @@ use predictor::{
     frankenhead::FrankenheadPredictor, hand_number_puzzle::HandNumberPuzzlePredictor,
     hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
-    lumber_length_game::LumberLengthGamePredictor,
-    m3d_rollball_animals_multi::M3DRotationMultiPredictor,
-    m3d_rollball_objects::M3DRotationPredictor, numericalmatch::NumericalmatchPredictor,
+    lumber_length_game::LumberLengthGamePredictor, numericalmatch::NumericalmatchPredictor,
     orbit_match_game::OrbitMatchGamePredictor, penguins::PenguinsPredictor,
-    penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor, shadows::ShadowsPredictor,
-    train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
+    penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor,
+    rollball_animals_multi::M3DRotationMultiPredictor, rollball_objects::M3DRotationPredictor,
+    shadows::ShadowsPredictor, train_coordinates::TrainCoordinatesPredictor,
+    unbentobjects::UnbentobjectsPredictor,
 };
 use std::{future::Future, path::PathBuf};
-pub use store::ONNXFetch;
-pub use store::ONNXFetchConfig;
 pub use variant::Variant;
 
 #[derive(typed_builder::TypedBuilder)]
@@ -69,7 +69,7 @@ pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<
         Variant::OrbitMatchGame => {
             get_predictor_from_cell(|| OrbitMatchGamePredictor::new(config)).await
         }
-        Variant::M3dRollballAnimalsMulti => {
+        Variant::RollballAnimalsMulti => {
             get_predictor_from_cell(|| M3DRotationMultiPredictor::new(config)).await
         }
         Variant::DicePair => get_predictor_from_cell(|| DicePairPredictor::new(config)).await,
@@ -83,7 +83,7 @@ pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<
         Variant::Numericalmatch => {
             get_predictor_from_cell(|| NumericalmatchPredictor::new(config)).await
         }
-        Variant::M3dRollballAnimals | Variant::M3dRollballObjects => {
+        Variant::RollballAnimals | Variant::RollballObjects => {
             get_predictor_from_cell(|| M3DRotationPredictor::new(config)).await
         }
         Variant::Coordinatesmatch => {
