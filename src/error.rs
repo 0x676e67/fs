@@ -80,6 +80,8 @@ impl IntoResponse for Error {
             | Error::OnnxError(_)
             | Error::InvalidModelName(_)
             | Error::ReqwestError(_)
+            | Error::OnnxSessionNotInitialized
+            | Error::PredictorNotActive(_)
             | Error::FallbackSolverError(_) => StatusCode::INTERNAL_SERVER_ERROR,
 
             Error::InvalidSubmitLimit
