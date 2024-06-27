@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::{file_sha256, Adapter};
+use super::{file_sha256, FetchAdapter};
 use crate::error::Error;
 use crate::{constant, Result};
 use aws_config::{BehaviorVersion, SdkConfig};
@@ -93,7 +93,7 @@ impl R2Adapter {
     }
 }
 
-impl Adapter for R2Adapter {
+impl FetchAdapter for R2Adapter {
     async fn fetch_model(
         &self,
         model_name: &'static str,

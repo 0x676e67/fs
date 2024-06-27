@@ -3,7 +3,7 @@ use crate::{
     error::Error,
     homedir,
     onnx::{
-        adapter::Adapter,
+        adapter::FetchAdapter,
         util::{
             check_input_image_size, process_classifier_image, process_pair_classifier_ans_image,
             process_pair_classifier_image,

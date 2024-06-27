@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use tokio::io::AsyncReadExt;
 
 /// Trait defining the fetch operation for ONNX models.
-pub trait Adapter {
+pub trait FetchAdapter {
     /// Asynchronously fetches an ONNX model.
     ///
     /// # Parameters
@@ -93,7 +93,7 @@ impl Default for ONNXFetch {
     }
 }
 
-impl Adapter for ONNXFetch {
+impl FetchAdapter for ONNXFetch {
     async fn fetch_model(
         &self,
         model_name: &'static str,

@@ -5,11 +5,11 @@ use std::{
 };
 use tokio::fs;
 
-use super::{file_sha256, Adapter};
+use super::{file_sha256, FetchAdapter};
 
 pub struct GithubAdapter;
 
-impl Adapter for GithubAdapter {
+impl FetchAdapter for GithubAdapter {
     async fn fetch_model(
         &self,
         model_name: &'static str,

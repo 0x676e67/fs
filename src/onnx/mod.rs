@@ -22,6 +22,7 @@ use predictor::{
     shadows::ShadowsPredictor, train_coordinates::TrainCoordinatesPredictor,
     unbentobjects::UnbentobjectsPredictor,
 };
+use std::sync::Arc;
 use std::{future::Future, path::PathBuf};
 pub use variant::Variant;
 
@@ -63,7 +64,7 @@ impl Default for ONNXConfig {
 /// let config = ONNXConfig::default();
 /// let predictor = new_predictor(Variant::OrbitMatchGame, &config).await?;
 /// ```
-pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<dyn Predictor>> {
+pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Arc<dyn Predictor>> {
     match variant {
         Variant::Diceico => get_predictor_from_cell(|| DiceicoPredictor::new(config)).await,
         Variant::OrbitMatchGame => {
@@ -120,11 +121,11 @@ pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Box<
     }
 }
 
-async fn get_predictor_from_cell<P, F, Fut>(creator: F) -> Result<Box<dyn Predictor>>
+async fn get_predictor_from_cell<P, F, Fut>(creator: F) -> Result<Arc<dyn Predictor>>
 where
     P: Predictor + 'static,
     F: FnOnce() -> Fut,
     Fut: Future<Output = Result<P>>,
 {
-    Ok(Box::new(creator().await?))
+    Ok(Arc::new(creator().await?))
 }
