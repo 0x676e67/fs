@@ -154,7 +154,7 @@ impl Solver for DefaultSolver {
                 let predictor = predictor.clone();
                 let image = image.clone();
                 tokio::spawn(async move {
-                    let answer = predictor.predict_encode(&image)?;
+                    let answer = predictor.predict_base64(&image)?;
                     if let Some(err) = tx.send((index, answer)).await.err() {
                         tracing::error!("Error sending solver result: {}", err);
                     }
