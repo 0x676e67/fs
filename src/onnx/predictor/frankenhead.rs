@@ -7,7 +7,7 @@ impl FrankenheadPredictor {
     /// Create a new instance of the Frankenhead
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("frankenhead.onnx", config).await?,
+            ImageClassifierPredictor::new("frankenhead.onnx", None, config).await?,
         ))
     }
 }

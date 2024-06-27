@@ -8,7 +8,7 @@ impl PenguinsPredictor {
     /// Create a new instance of the PenguinsPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("penguin.onnx", config).await?,
+            ImageClassifierPredictor::new("penguin.onnx", None, config).await?,
         ))
     }
 }

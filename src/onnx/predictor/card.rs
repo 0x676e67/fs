@@ -8,7 +8,7 @@ impl CardPredictor {
     /// Create a new instance of the CardPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("card.onnx", config).await?,
+            ImageClassifierPredictor::new("card.onnx", None, config).await?,
         ))
     }
 }

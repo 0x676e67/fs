@@ -7,7 +7,7 @@ impl DicePairPredictor {
     /// Create a new instance of the DicePairPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("dice_pair.onnx", config).await?,
+            ImageClassifierPredictor::new("dice_pair.onnx", None, config).await?,
         ))
     }
 }

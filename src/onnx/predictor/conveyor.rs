@@ -8,7 +8,7 @@ impl ConveyorPredictor {
     /// Create a new instance of the ConveyorPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("conveyor.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("conveyor.onnx", None, config, false).await?,
         ))
     }
 }

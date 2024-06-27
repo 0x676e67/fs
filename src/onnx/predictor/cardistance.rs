@@ -8,7 +8,7 @@ impl CardistancePredictor {
     /// Create a new instance of the CardistancePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("cardistance.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("cardistance.onnx", None, config, false).await?,
         ))
     }
 }

@@ -8,7 +8,7 @@ impl ShadowsPredictor {
     /// Create a new instance of the TrainCoordinatesPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("shadows.onnx", config).await?,
+            ImageClassifierPredictor::new("shadows.onnx", None, config).await?,
         ))
     }
 }

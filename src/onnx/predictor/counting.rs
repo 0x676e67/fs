@@ -7,7 +7,7 @@ impl CountingPredictor {
     /// Create a new instance of the CountingPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("counting.onnx", config).await?,
+            ImageClassifierPredictor::new("counting.onnx", None, config).await?,
         ))
     }
 }

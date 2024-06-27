@@ -8,7 +8,7 @@ impl DiceicoPredictor {
     /// Create a new instance of the DiceicoPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("diceico.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("diceico.onnx", None, config, false).await?,
         ))
     }
 }
