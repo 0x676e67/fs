@@ -5,11 +5,9 @@ use crate::{
     Result,
 };
 use axum::Json;
-use image::DynamicImage;
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::{str::FromStr, sync::Arc};
+use std::{ops::Deref, str::FromStr, sync::Arc};
 use tokio::sync::OnceCell;
 use typed_builder::TypedBuilder;
 
@@ -30,7 +28,7 @@ pub trait Solver {
     /// # Returns
     /// - A `Result` containing a `Json<TaskResult>` if the task is processed successfully.
     /// - An `Error` if the task processing fails.
-    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>>;
+    async fn process(&self, task: &Task) -> Result<Json<TaskResult>>;
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -93,7 +91,7 @@ impl SolverHelper {
 
 impl Solver for SolverHelper {
     /// Process the task
-    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+    async fn process(&self, task: &Task) -> Result<Json<TaskResult>> {
         // Validate the task
         self.validate_task(&task)?;
 
@@ -104,7 +102,7 @@ impl Solver for SolverHelper {
             // If there is a fallback solver, use the fallback solver task
             Some(fallback_solver) => {
                 // Try to use the solver task
-                match self.onnx_solver.process(task.clone()).await {
+                match self.onnx_solver.process(task).await {
                     // If the solver task is successful, return the result
                     Ok(result) => Ok(result),
                     // If the solver task fails, use the fallback solver task
@@ -122,22 +120,22 @@ impl Solver for SolverHelper {
 /// The `OnceCell` instances are used to lazily initialize and store the predictors for each variant.
 ///
 /// # Fields
-/// * `onnx`: The ONNX model configuration.
+/// * `config`: The ONNX model configuration.
 /// * `predictors`: An array of `OnceCell` instances, each of which can hold a `Box<dyn Predictor>`.
 #[derive(TypedBuilder)]
 pub struct DefaultSolver {
-    onnx: ONNXConfig,
-    predictors: [OnceCell<Box<dyn Predictor>>; Variant::const_count()],
+    config: ONNXConfig,
+    predictors: [OnceCell<Arc<dyn Predictor>>; Variant::const_count()],
 }
 
 impl Solver for DefaultSolver {
-    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+    async fn process(&self, task: &Task) -> Result<Json<TaskResult>> {
         // Try to convert the task to a variant
         let variant = Variant::try_from(&*task)?;
 
         // Process the task using the model
         let predictor = self.predictors[variant as usize]
-            .get_or_try_init(|| onnx::new_predictor(variant, &self.onnx))
+            .get_or_try_init(|| onnx::new_predictor(variant, &self.config))
             .await?;
 
         // Check if the predictor is active
@@ -147,19 +145,38 @@ impl Solver for DefaultSolver {
 
         // Process the task
         let answers = {
-            let mut objects = task
-                .images
-                .par_iter()
-                .enumerate()
-                .map(|(index, image)| {
-                    let image = decode_image(image)?;
-                    let answer = predictor.predict(image)?;
-                    Ok((index, answer))
-                })
-                .collect::<Result<Vec<(usize, i32)>>>()?;
+            // Assume the number of images is known and not too large for buffer size
+            let (tx, mut rx) = tokio::sync::mpsc::channel(task.images.len());
 
+            // Create tasks for processing images
+            for (index, image) in task.images.iter().enumerate() {
+                let tx = tx.clone();
+                let predictor = predictor.clone();
+                let image = image.clone();
+                tokio::spawn(async move {
+                    let answer = predictor.predict_encode(&image)?;
+                    if let Some(err) = tx.send((index, answer)).await.err() {
+                        tracing::error!("Error sending solver result: {}", err);
+                    }
+                    std::result::Result::<_, Error>::Ok(())
+                });
+            }
+
+            // Drop the original sender so the receiver knows when all tasks are done
+            drop(tx);
+
+            // Collect and sort the results
+            let mut objects = vec![];
+            while let Some(result) = rx.recv().await {
+                objects.push(result);
+            }
+
+            // Sort the results by index and extract the answers
             objects.sort_by_key(|&(index, _)| index);
-            objects.into_iter().map(|(_, answer)| answer).collect()
+            objects
+                .into_iter()
+                .map(|(_, answer)| answer)
+                .collect::<Vec<i32>>()
         };
 
         // If the task is successfully processed, return the answers
@@ -259,7 +276,7 @@ impl FallbackSolver {
 }
 
 impl Solver for FallbackSolver {
-    async fn process(&self, task: Arc<Task>) -> Result<Json<TaskResult>> {
+    async fn process(&self, task: &Task) -> Result<Json<TaskResult>> {
         // Get game variant and instructions
         let (game_variant, instructions) = &task.game_variant_instructions;
 
@@ -268,9 +285,9 @@ impl Solver for FallbackSolver {
 
         match self.typed {
             TypedFallback::Yescaptcha => {
-                // single image
+                // Single image
                 for image in task.images.iter() {
-                    // submit task
+                    // Submit task
                     let task = SubmitTask::builder()
                         .image(image)
                         .game_variant_instructions((&game_variant, &instructions))
@@ -280,14 +297,14 @@ impl Solver for FallbackSolver {
                 }
             }
             TypedFallback::Capsolver => {
-                // split chunk images
+                // Split chunk images
                 let images_chunk = task.images.chunks(self.limit.max(1));
 
-                // submit multiple images task
+                // Submit multiple images task
                 for chunk in images_chunk {
-                    // submit task
+                    // Submit task
                     let task = SubmitTask::builder()
-                        .images(chunk)
+                        .images(chunk.iter().map(|s| s.deref()).collect::<Vec<_>>())
                         .game_variant_instructions((&game_variant, &instructions))
                         .build();
                     let answer = self.submit_task(task).await?;
@@ -300,16 +317,6 @@ impl Solver for FallbackSolver {
             TaskResult::builder().solved(true).objects(answers).build(),
         ))
     }
-}
-
-/// Decode the base64 image
-fn decode_image(base64_string: &String) -> Result<DynamicImage> {
-    // base64 decode the image
-    use base64::{engine::general_purpose, Engine as _};
-    let image_bytes = general_purpose::STANDARD
-        .decode(base64_string.split(',').nth(1).unwrap_or(base64_string))?;
-    // convert the bytes to an image
-    Ok(image::load_from_memory(&image_bytes)?)
 }
 
 #[derive(Deserialize, Default)]
@@ -338,6 +345,6 @@ pub struct SubmitTask<'a> {
     #[builder(default, setter(strip_option))]
     pub image: Option<&'a String>,
     #[builder(default, setter(strip_option))]
-    pub images: Option<&'a [String]>,
+    pub images: Option<Vec<&'a String>>,
     pub game_variant_instructions: (&'a str, &'a str),
 }

@@ -60,7 +60,7 @@ pub async fn run(args: BootArgs) -> Result<()> {
             .limit(args.limit)
             .onnx_solver(
                 DefaultSolver::builder()
-                    .onnx(
+                    .config(
                         ONNXConfig::builder()
                             .model_dir(args.model_dir)
                             .update_check(args.update_check)
@@ -147,7 +147,7 @@ async fn task(
     }
 
     // Process the solver task
-    state.solver.process(Arc::new(task)).await
+    state.solver.process(&task).await
 }
 
 /// Handles the 404 requests.

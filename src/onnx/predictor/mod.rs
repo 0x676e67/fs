@@ -25,7 +25,16 @@ pub mod shadows;
 pub mod train_coordinates;
 pub mod unbentobjects;
 
+use base64::{engine::general_purpose, Engine as _};
+
 pub trait Predictor: Send + Sync {
+    fn predict_encode(&self, image: &String) -> crate::Result<i32> {
+        let image_bytes =
+            general_purpose::STANDARD.decode(image.split(',').nth(1).unwrap_or(image))?;
+        let image = image::load_from_memory(&image_bytes)?;
+        self.predict(image)
+    }
+
     fn predict(&self, image: image::DynamicImage) -> crate::Result<i32>;
 
     fn active(&self) -> bool;
