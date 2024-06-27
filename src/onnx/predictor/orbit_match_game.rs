@@ -8,7 +8,7 @@ impl OrbitMatchGamePredictor {
     /// Create a new instance of the OrbitMatchGamePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("orbit_match_game.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("orbit_match_game.onnx", None, config, false).await?,
         ))
     }
 }

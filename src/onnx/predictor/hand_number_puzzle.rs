@@ -8,7 +8,7 @@ impl HandNumberPuzzlePredictor {
     /// Create a new instance of the HandNumberPuzzlePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("hand_number_puzzle.onnx", config).await?,
+            ImageClassifierPredictor::new("hand_number_puzzle.onnx", None, config).await?,
         ))
     }
 }

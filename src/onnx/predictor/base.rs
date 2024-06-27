@@ -27,15 +27,21 @@ use std::f32;
 use tokio::sync::OnceCell;
 
 pub struct ImageClassifierPredictor {
+    input_shape: (u32, u32),
     session: OnceCell<Session>,
     active: OnceCell<()>,
 }
 
 impl ImageClassifierPredictor {
-    pub async fn new(onnx: &'static str, config: &ONNXConfig) -> Result<Self> {
+    pub async fn new(
+        onnx: &'static str,
+        input_shape: Option<(u32, u32)>,
+        config: &ONNXConfig,
+    ) -> Result<Self> {
         let predictor = ImageClassifierPredictor {
             session: OnceCell::new(),
             active: OnceCell::new(),
+            input_shape: input_shape.unwrap_or((52, 52)),
         };
 
         // If the session is created successfully, set the session and wait for it to be initialized
@@ -79,7 +85,7 @@ impl ImageClassifierPredictor {
         let mut max_index: i32 = -1;
 
         for i in 0..6 {
-            let ts = process_classifier_image(&mut image, i, (52, 52))?;
+            let ts = process_classifier_image(&mut image, i, self.input_shape)?;
 
             let prediction = self.run_prediction(ts)?;
             let prediction_value = prediction[0];
@@ -94,16 +100,23 @@ impl ImageClassifierPredictor {
 }
 
 pub struct ImagePairClassifierPredictor {
+    input_shape: (u32, u32),
     session: OnceCell<Session>,
     active: OnceCell<()>,
     is_grayscale: bool,
 }
 
 impl ImagePairClassifierPredictor {
-    pub async fn new(onnx: &'static str, config: &ONNXConfig, is_grayscale: bool) -> Result<Self> {
+    pub async fn new(
+        onnx: &'static str,
+        input_shape: Option<(u32, u32)>,
+        config: &ONNXConfig,
+        is_grayscale: bool,
+    ) -> Result<Self> {
         let predictor = ImagePairClassifierPredictor {
             session: OnceCell::new(),
             active: OnceCell::new(),
+            input_shape: input_shape.unwrap_or((52, 52)),
             is_grayscale,
         };
 
@@ -153,10 +166,12 @@ impl ImagePairClassifierPredictor {
         let mut max_prediction = f32::NEG_INFINITY;
         let width = image.width();
         let mut max_index = 0;
-        let left = process_pair_classifier_ans_image(&mut image, (52, 52), self.is_grayscale)?;
+        let left =
+            process_pair_classifier_ans_image(&mut image, self.input_shape, self.is_grayscale)?;
 
         for i in 0..(width / 200) {
-            let right = process_pair_classifier_image(&image, (0, i), (52, 52), self.is_grayscale)?;
+            let right =
+                process_pair_classifier_image(&image, (0, i), self.input_shape, self.is_grayscale)?;
             let prediction = self.run_prediction(left.clone(), right)?;
             let prediction_value = prediction[0];
             if prediction_value > max_prediction {

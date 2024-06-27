@@ -8,7 +8,7 @@ impl UnbentobjectsPredictor {
     /// Create a new instance of the UnbentobjectsPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("knotsCrossesCircle.onnx", config).await?,
+            ImageClassifierPredictor::new("knotsCrossesCircle.onnx", None, config).await?,
         ))
     }
 }

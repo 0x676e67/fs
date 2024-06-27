@@ -8,7 +8,8 @@ impl LumberLengthGamePredictor {
     /// Create a new instance of the LumberLengthGamePredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("lumber-length-game.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("lumber-length-game.onnx", None, config, false)
+                .await?,
         ))
     }
 }

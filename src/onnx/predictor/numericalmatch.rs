@@ -8,7 +8,13 @@ impl NumericalmatchPredictor {
     /// Create a new instance of the NumericalmatchPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("numericalmatch.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new(
+                "numericalmatch.onnx",
+                Some((100, 100)),
+                config,
+                false,
+            )
+            .await?,
         ))
     }
 }

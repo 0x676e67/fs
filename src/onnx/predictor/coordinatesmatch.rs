@@ -7,7 +7,7 @@ impl CoordinatesMatchPredictor {
     /// Create a new instance of the CoordinatesMatchPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("coordinatesmatch.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("coordinatesmatch.onnx", None, config, false).await?,
         ))
     }
 }

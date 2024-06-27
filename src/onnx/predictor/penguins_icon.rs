@@ -8,7 +8,7 @@ impl PenguinsIconPredictor {
     /// Create a new instance of the PenguinsIconPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("penguins-icon.onnx", config).await?,
+            ImageClassifierPredictor::new("penguins-icon.onnx", None, config).await?,
         ))
     }
 }

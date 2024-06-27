@@ -7,7 +7,7 @@ impl DicematchMatchPredictor {
     /// Create a new instance of the DicematchMatchPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImageClassifierPredictor::new("dicematch.onnx", config).await?,
+            ImageClassifierPredictor::new("dicematch.onnx", None, config).await?,
         ))
     }
 }

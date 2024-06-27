@@ -8,8 +8,13 @@ impl M3DRotationMultiPredictor {
     /// Create a new instance of the M3DRotationPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("3d_rollball_animals_multi.onnx", config, false)
-                .await?,
+            ImagePairClassifierPredictor::new(
+                "3d_rollball_animals_multi.onnx",
+                None,
+                config,
+                false,
+            )
+            .await?,
         ))
     }
 }

@@ -8,7 +8,8 @@ impl HopscotchHighsecPredictor {
     /// Create a new instance of the HopscotchHighsecPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("hopscotch_highsec.onnx", config, false).await?,
+            ImagePairClassifierPredictor::new("hopscotch_highsec.onnx", None, config, false)
+                .await?,
         ))
     }
 }
