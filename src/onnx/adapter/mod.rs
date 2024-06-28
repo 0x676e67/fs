@@ -1,4 +1,5 @@
 pub mod github;
+mod progress;
 pub mod r2;
 
 use std::path::PathBuf;

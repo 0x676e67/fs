@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use super::{file_sha256, FetchAdapter};
 use crate::error::Error;
+use crate::onnx::adapter::progress;
 use crate::{constant, Result};
 use aws_config::{BehaviorVersion, SdkConfig};
 use aws_sdk_s3::config::{Credentials, Region, SharedCredentialsProvider};
@@ -77,17 +78,21 @@ impl R2Adapter {
             .await
             .map_err(|e| Error::CloudflareR2SdkError(e.to_string()))?;
 
+        // Get content length
+        let len = resp.content_length().unwrap_or(0) as u64;
+
         // IntoAsyncRead is implemented for `impl AsyncRead + Unpin + Send + Sync`
-        let mut stream = resp.body.into_async_read();
+        let stream = resp.body.into_async_read();
+
+        // Create a progress bar
+        let pb = progress::ProgressBar::new(len)?;
 
         // Open file for writing
-        let mut out = fs::File::create(model_file).await?;
+        let mut tmp_file = fs::File::create(model_file).await?;
 
         // Copy the stream to the file
-        let copy = tokio::io::copy(&mut stream, &mut out).await?;
-        drop(out);
-        drop(stream);
-        tracing::info!("downloaded {} bytes to {}", copy, model_file.display());
+        tokio::io::copy(&mut pb.wrap_async_read(stream), &mut tmp_file).await?;
+        drop(tmp_file);
 
         Ok(())
     }

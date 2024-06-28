@@ -1,4 +1,4 @@
-use crate::{constant, error::Error, Result};
+use crate::{constant, error::Error, onnx::adapter::progress, Result};
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
@@ -92,15 +92,29 @@ async fn version_info(version_info_path: &PathBuf) -> Option<HashMap<String, Str
 }
 
 async fn download_file<P: AsRef<Path>>(url: &str, filename: P) -> Result<()> {
-    let bytes = reqwest::get(url).await?.bytes().await?;
-    let mut out = fs::File::create(filename.as_ref()).await?;
-    let bytes_count = tokio::io::copy(&mut bytes.as_ref(), &mut out).await?;
-    drop(out);
-    drop(bytes);
-    tracing::info!(
-        "downloaded {} bytes to {}",
-        bytes_count,
-        filename.as_ref().display()
-    );
+    use futures_util::StreamExt;
+
+    // Fetch the response
+    let resp = reqwest::get(url).await?;
+
+    // Get the response content length
+    let content_length = resp.content_length().unwrap_or(0);
+
+    // Read the response bytes stream
+    let mut byte_stream = resp.bytes_stream();
+
+    // Create a progress bar
+    let pb = progress::ProgressBar::new(content_length)?;
+
+    // Create a file
+    let mut tmp_file = fs::File::create(filename.as_ref()).await?;
+
+    while let Some(item) = byte_stream.next().await {
+        let bytes = item?;
+        let mut read = pb.wrap_async_read(bytes.as_ref());
+        tokio::io::copy(&mut read, &mut tmp_file).await?;
+    }
+
+    drop(tmp_file);
     Ok(())
 }

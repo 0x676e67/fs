@@ -68,6 +68,9 @@ pub enum Error {
 
     #[error("Predictor: {0:?} not active")]
     PredictorNotActive(Variant),
+
+    #[error(transparent)]
+    ProcessBarrierError(#[from] indicatif::style::TemplateError),
 }
 
 impl IntoResponse for Error {
