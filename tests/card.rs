@@ -1,20 +1,13 @@
+mod pre;
 use fs::onnx::Variant;
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 1)]
 async fn test() {
+    let dir = "tests/data/card";
     let args = Default::default();
-
-    let predictor = fs::onnx::new_predictor(Variant::Card, &args).await.unwrap();
-
-    let image_file = std::fs::read("tests/data/card/card_1.jpg").unwrap();
-    let guess = predictor
-        .predict(image::load_from_memory(&image_file).unwrap())
+    let predictor = fs::onnx::new_predictor(Variant::Card, &args)
+        .await
         .unwrap();
-    assert_eq!(guess, 0);
 
-    let image_file = std::fs::read("tests/data/card/card_2.jpg").unwrap();
-    let guess = predictor
-        .predict(image::load_from_memory(&image_file).unwrap())
-        .unwrap();
-    assert_eq!(guess, 2);
+    pre::test_predictor(dir, predictor);
 }
