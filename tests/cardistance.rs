@@ -17,3 +17,4 @@ async fn test() {
         .unwrap();
     assert_eq!(guess, 7);
 }
+

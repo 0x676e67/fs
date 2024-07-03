@@ -8,7 +8,7 @@ impl RockstackPredictor {
     /// Create a new instance of the RockstackPredictor
     pub async fn new(config: &ONNXConfig) -> Result<Self> {
         Ok(Self(
-            ImagePairClassifierPredictor::new("rockstack_v2.onnx", None, config, true).await?,
+            ImagePairClassifierPredictor::new("rockstack.onnx", None, config, false).await?,
         ))
     }
 }
