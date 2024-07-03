@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use fs::onnx::Predictor;
+use std::sync::Arc;
 
 pub fn test_predictor(dir: &str, predictor: Arc<dyn Predictor>) {
     // list all files in the directory
