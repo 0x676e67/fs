@@ -9,5 +9,5 @@ async fn test() {
         .await
         .unwrap();
 
-    pre::test_predictor(dir, predictor);
+    pre::test_predictor(dir, predictor).unwrap();
 }

@@ -35,8 +35,12 @@ pub enum ONNXFetchConfig {
     /// Represents the CloudFlare R2 storage option.
     R2 {
         /// The name of the bucket.
-        #[clap(short, long)]
+        #[clap(short = 'b', long)]
         bucket_name: String,
+
+        /// The bucket key prefix.
+        #[clap(short = 'p', long)]
+        prefix_key: Option<String>,
 
         /// The URL of the Cloudflare KV.
         #[clap(short = 'l', long)]
@@ -70,12 +74,14 @@ impl ONNXFetch {
         match onnx_store {
             ONNXFetchConfig::R2 {
                 bucket_name,
+                prefix_key,
                 url: cloudflare_kv_uri,
                 client_id: cloudflare_kv_client_id,
                 secret: cloudflare_kv_secret,
             } => {
                 let r2 = r2::R2Adapter::new(
                     bucket_name,
+                    prefix_key,
                     cloudflare_kv_uri,
                     cloudflare_kv_client_id,
                     cloudflare_kv_secret,
