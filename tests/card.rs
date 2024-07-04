@@ -7,5 +7,5 @@ async fn test() {
     let args = Default::default();
     let predictor = fs::onnx::new_predictor(Variant::Card, &args).await.unwrap();
 
-    pre::test_predictor(dir, predictor);
+    pre::test_predictor(dir, predictor).unwrap();
 }

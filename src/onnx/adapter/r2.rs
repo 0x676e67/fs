@@ -18,6 +18,7 @@ static S3_CONFIG: OnceCell<SdkConfig> = OnceCell::const_new();
 #[derive(Debug, Clone)]
 pub struct R2Adapter {
     bucket_name: String,
+    prefix_key: Option<String>,
     client: Arc<Client>,
 }
 
@@ -26,6 +27,7 @@ impl R2Adapter {
     /// to auto. Read more here <https://developers.cloudflare.com/r2/api/s3/api/>.
     pub async fn new(
         bucket_name: String,
+        prefix_key: Option<String>,
         url: String,
         client_id: String,
         secret: String,
@@ -45,7 +47,8 @@ impl R2Adapter {
             .await;
 
         R2Adapter {
-            bucket_name: bucket_name.into(),
+            bucket_name,
+            prefix_key,
             client: Arc::new(aws_sdk_s3::Client::new(s3_config)),
         }
     }
@@ -68,6 +71,13 @@ impl R2Adapter {
     }
 
     async fn download_file(&self, key: &str, model_file: &PathBuf) -> Result<()> {
+        // Prefix key with the prefix_key if it exists
+        let key = self
+            .prefix_key
+            .as_ref()
+            .map(|prefix_key| format!("{}/{}", prefix_key, key))
+            .unwrap_or_else(|| key.to_string());
+
         // Get object from the bucket
         let resp = self
             .client
