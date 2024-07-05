@@ -29,11 +29,11 @@ pub trait FetchAdapter {
 }
 
 /// Enum representing the ONNX model storage options.
-/// Currently, there are two options: R2 and Github.
+/// Currently, there are two options: S3 and Github.
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
 pub enum ONNXFetchConfig {
-    /// Represents the CloudFlare R2 storage option.
-    R2 {
+    /// Represents the AWS S3 storage option.
+    S3 {
         /// The name of the bucket.
         #[clap(short = 'b', long)]
         bucket_name: String,
@@ -72,7 +72,7 @@ pub enum ONNXFetch {
 impl ONNXFetch {
     pub async fn new(onnx_store: ONNXFetchConfig) -> Self {
         match onnx_store {
-            ONNXFetchConfig::R2 {
+            ONNXFetchConfig::S3 {
                 bucket_name,
                 prefix_key,
                 url: cloudflare_kv_uri,
