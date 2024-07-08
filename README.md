@@ -6,10 +6,6 @@
 <a href="https://github.com/0x676e67/fs/releases">
 <img src="https://img.shields.io/github/release/0x676e67/fs.svg?style=flat">
 </a>
-</a><a href="https://github.com/0x676e67/fs/releases">
-<img src="https://img.shields.io/github/downloads/0x676e67/fs/total?style=flat">
-</a>
-
 # fs
 
 ArkoseLabs funcaptcha challenge solver server
