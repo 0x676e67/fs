@@ -22,7 +22,7 @@ use ort::CoreMLExecutionProvider;
 use ort::DirectMLExecutionProvider;
 #[cfg(feature = "rocm")]
 use ort::ROCmExecutionProvider;
-use ort::{GraphOptimizationLevel, MemoryInfo, Session};
+use ort::{AllocationDevice, GraphOptimizationLevel, MemoryInfo, MemoryType, Session};
 use std::f32;
 use tokio::sync::OnceCell;
 
@@ -220,9 +220,11 @@ async fn create_onnx_session(onnx: &'static str, config: &ONNXConfig) -> Result<
             #[cfg(feature = "rocm")]
             ROCmExecutionProvider::default().build(),
         ])?
-        .with_allocator(MemoryInfo::new_cpu(
+        .with_allocator(MemoryInfo::new(
+            AllocationDevice::CPU,
+            0,
             config.allocator,
-            ort::MemoryType::Default,
+            MemoryType::Default,
         )?)?
         .commit_from_file(model_file)?;
     Ok(session)
