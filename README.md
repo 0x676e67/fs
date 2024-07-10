@@ -1,4 +1,3 @@
-[![CI](https://github.com/0x676e67/fs/actions/workflows/ci.yml/badge.svg)](https://github.com/0x676e67/fs/actions/workflows/ci.yml)
 [![CI](https://github.com/0x676e67/fs/actions/workflows/release.yml/badge.svg)](https://github.com/0x676e67/fs/actions/workflows/release.yml)
 <a target="_blank" href="https://github.com/0x676e67/fs/blob/main/LICENSE">
 <img src="https://img.shields.io/badge/MIT-blue.svg"/>
