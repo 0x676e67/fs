@@ -30,7 +30,7 @@ ArkoseLabs funcaptcha challenge solver server
 | Rollball Games       | `3d_rollball_animals`, `3d_rollball_objects`, `3d_rollball_animals_multi` |
 | Educational Challenges | `coordinatesmatch`, `train_coordinates`, `numericalmatch`, `dicematch` |
 | Puzzle Games         | `BrokenJigsawbrokenjigsaw_swap`, `shadows`, `penguins`, `frankenhead`, `counting`, `knotsCrossesCircle`, `hand_number_puzzle`, `card`, `rockstack`, `cardistance`, `penguins-icon`, `conveyor`, `unbentobjects` |
-| Miscellaneous Challenges | `hopscotch_highsec`, `dice_pair`, `diceico`, `lumber-length-game` |
+| Miscellaneous Challenges | `hopscotch_highsec`, `dice_pair`, `diceico`, `lumber-length-game`, `maze2` |
 
 ## Usage
 
