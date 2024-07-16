@@ -14,7 +14,7 @@ repository = "https://github.com/0x676e67/fs"
 thiserror = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-typed-builder = "0.18"
+typed-builder = "0.19"
 base64 = "0.22"
 image = "0.25"
 ndarray = "0.15.6"
