@@ -14,6 +14,7 @@ pub mod hand_number_puzzle;
 pub mod hopscotch_highsec;
 pub mod knots_crosses_circle;
 pub mod lumber_length_game;
+pub mod maze2;
 pub mod numericalmatch;
 pub mod orbit_match_game;
 pub mod penguins;

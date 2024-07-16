@@ -15,12 +15,12 @@ use predictor::{
     frankenhead::FrankenheadPredictor, hand_number_puzzle::HandNumberPuzzlePredictor,
     hopscotch_highsec::HopscotchHighsecPredictor,
     knots_crosses_circle::KnotsCrossesCirclePredictor,
-    lumber_length_game::LumberLengthGamePredictor, numericalmatch::NumericalmatchPredictor,
-    orbit_match_game::OrbitMatchGamePredictor, penguins::PenguinsPredictor,
-    penguins_icon::PenguinsIconPredictor, rockstack::RockstackPredictor,
-    rollball_animals_multi::M3DRotationMultiPredictor, rollball_objects::M3DRotationPredictor,
-    shadows::ShadowsPredictor, train_coordinates::TrainCoordinatesPredictor,
-    unbentobjects::UnbentobjectsPredictor,
+    lumber_length_game::LumberLengthGamePredictor, maze2::Maze2Predictor,
+    numericalmatch::NumericalmatchPredictor, orbit_match_game::OrbitMatchGamePredictor,
+    penguins::PenguinsPredictor, penguins_icon::PenguinsIconPredictor,
+    rockstack::RockstackPredictor, rollball_animals_multi::M3DRotationMultiPredictor,
+    rollball_objects::M3DRotationPredictor, shadows::ShadowsPredictor,
+    train_coordinates::TrainCoordinatesPredictor, unbentobjects::UnbentobjectsPredictor,
 };
 use std::sync::Arc;
 use std::{future::Future, path::PathBuf};
@@ -118,6 +118,7 @@ pub async fn new_predictor(variant: Variant, config: &ONNXConfig) -> Result<Arc<
         Variant::Dicematch => {
             get_predictor_from_cell(|| DicematchMatchPredictor::new(config)).await
         }
+        Variant::Maze2 => get_predictor_from_cell(|| Maze2Predictor::new(config)).await,
     }
 }
 
