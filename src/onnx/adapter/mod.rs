@@ -2,7 +2,7 @@ pub mod github;
 mod progress;
 pub mod s3;
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::Result;
 use clap::Subcommand;
@@ -26,6 +26,24 @@ pub trait FetchAdapter {
         model_dir: std::path::PathBuf,
         update_check: bool,
     ) -> Result<PathBuf>;
+
+    /// Asynchronously fetches the SHA256 hash of a file.
+    /// # Parameters
+    /// - `filepath`: The path to the file.
+    /// # Returns
+    /// - A `Result` containing a `String`. On success, this `String` is the SHA256 hash of the file.
+    async fn file_sha256(filepath: impl AsRef<Path>) -> Result<String> {
+        let mut file = tokio::fs::File::open(filepath).await?;
+        let mut sha256 = Sha256::new();
+        let mut buffer = [0; 1024];
+        while let Ok(n) = file.read(&mut buffer).await {
+            if n == 0 {
+                break;
+            }
+            sha256.update(&buffer[..n]);
+        }
+        Ok(format!("{:x}", sha256.finalize()))
+    }
 }
 
 /// Enum representing the ONNX model storage options.
@@ -116,17 +134,4 @@ impl FetchAdapter for Adapter {
             }
         }
     }
-}
-
-async fn file_sha256(filename: &PathBuf) -> Result<String> {
-    let mut file = tokio::fs::File::open(filename).await?;
-    let mut sha256 = Sha256::new();
-    let mut buffer = [0; 1024];
-    while let Ok(n) = file.read(&mut buffer).await {
-        if n == 0 {
-            break;
-        }
-        sha256.update(&buffer[..n]);
-    }
-    Ok(format!("{:x}", sha256.finalize()))
 }

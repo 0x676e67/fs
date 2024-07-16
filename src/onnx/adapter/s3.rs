@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use super::{file_sha256, FetchAdapter};
+use super::FetchAdapter;
 use crate::error::Error;
 use crate::onnx::adapter::progress;
 use crate::Result;
@@ -52,7 +52,7 @@ impl S3Adapter {
         }
     }
 
-    async fn version_info(&self, filepath: &PathBuf) -> Option<String> {
+    async fn sha256(&self, filepath: &PathBuf) -> Option<String> {
         if filepath.exists() {
             tracing::info!("{} exists, skipping download", filepath.display());
             fs::read_to_string(&filepath).await.ok()
@@ -134,8 +134,8 @@ impl FetchAdapter for S3Adapter {
 
         // If update_check is true, check the hash of the model
         if update_check {
-            if let Some(expected_hash) = self.version_info(&sha256_filename).await {
-                let current_hash = file_sha256(&model_file).await?;
+            if let Some(expected_hash) = self.sha256(&sha256_filename).await {
+                let current_hash = Self::file_sha256(&model_file).await?;
                 if current_hash.ne(&expected_hash) {
                     tracing::info!(
                         "model {} hash mismatch, downloading...",

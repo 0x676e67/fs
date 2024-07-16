@@ -2,7 +2,7 @@ use crate::{onnx::adapter::progress, Result};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 
-use super::{file_sha256, FetchAdapter};
+use super::FetchAdapter;
 
 const GITHUB_DOWNLOAD_BASH_URL: &str = "https://github.com/0x676e67/fs/releases/download/model";
 
@@ -45,7 +45,7 @@ impl FetchAdapter for GithubAdapter {
         // If update_check is true, check the hash of the model
         if update_check {
             if let Some(expected_hash) = sha256(&sha256_filename).await {
-                let current_hash = file_sha256(&model_file).await?;
+                let current_hash = Self::file_sha256(&model_file).await?;
                 if current_hash.ne(&expected_hash) {
                     tracing::info!(
                         "model {} hash mismatch, downloading...",
@@ -57,18 +57,6 @@ impl FetchAdapter for GithubAdapter {
         }
 
         Ok(model_file)
-    }
-}
-
-async fn sha256(filepath: &PathBuf) -> Option<String> {
-    if filepath.exists() {
-        tracing::info!("{} exists, skipping download", filepath.display());
-        fs::read_to_string(&filepath).await.ok()
-    } else {
-        let filename = filepath.file_name()?.to_str()?;
-        let url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{filename}");
-        download_file(&url, filepath).await.ok()?;
-        fs::read_to_string(&filepath).await.ok()
     }
 }
 
@@ -98,4 +86,16 @@ async fn download_file<P: AsRef<Path>>(url: &str, file: P) -> Result<()> {
 
     drop(tmp_file);
     Ok(())
+}
+
+async fn sha256(filepath: &PathBuf) -> Option<String> {
+    if filepath.exists() {
+        tracing::info!("{} exists, skipping download", filepath.display());
+        fs::read_to_string(&filepath).await.ok()
+    } else {
+        let filename = filepath.file_name()?.to_str()?;
+        let url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{filename}");
+        download_file(&url, filepath).await.ok()?;
+        fs::read_to_string(&filepath).await.ok()
+    }
 }
