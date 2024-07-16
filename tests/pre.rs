@@ -38,6 +38,7 @@ pub fn test_predictor(dir: &str, predictor: Arc<dyn Predictor>) -> Result<(), Bo
             };
 
             assert_eq!(guess, label);
+            println!("{}: {}", filepath, guess);
         }
     }
 
