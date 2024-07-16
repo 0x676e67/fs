@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use super::FetchAdapter;
@@ -63,7 +63,7 @@ impl S3Adapter {
         }
     }
 
-    async fn download_file(&self, key: &str, model_file: &PathBuf) -> Result<()> {
+    async fn download_file(&self, key: &str, filepath: impl AsRef<Path>) -> Result<()> {
         // Prefix key with the prefix_key if it exists
         let key = self
             .prefix_key
@@ -91,7 +91,7 @@ impl S3Adapter {
         let pb = progress::ProgressBar::new(len)?;
 
         // Open file for writing
-        let mut tmp_file = fs::File::create(model_file).await?;
+        let mut tmp_file = fs::File::create(filepath).await?;
 
         // Copy the stream to the file
         tokio::io::copy(&mut pb.wrap_async_read(stream), &mut tmp_file).await?;

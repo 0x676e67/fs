@@ -60,7 +60,7 @@ impl FetchAdapter for GithubAdapter {
     }
 }
 
-async fn download_file<P: AsRef<Path>>(url: &str, file: P) -> Result<()> {
+async fn download_file(url: &str, filepath: impl AsRef<Path>) -> Result<()> {
     use futures_util::StreamExt;
 
     // Fetch the response
@@ -76,7 +76,7 @@ async fn download_file<P: AsRef<Path>>(url: &str, file: P) -> Result<()> {
     let pb = progress::ProgressBar::new(content_length)?;
 
     // Create a file
-    let mut tmp_file = fs::File::create(file.as_ref()).await?;
+    let mut tmp_file = fs::File::create(filepath.as_ref()).await?;
 
     while let Some(item) = byte_stream.next().await {
         let bytes = item?;
