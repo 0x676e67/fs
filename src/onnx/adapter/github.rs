@@ -1,11 +1,10 @@
-use crate::{constant, error::Error, onnx::adapter::progress, Result};
-use std::{
-    collections::HashMap,
-    path::{Path, PathBuf},
-};
+use crate::{onnx::adapter::progress, Result};
+use std::path::{Path, PathBuf};
 use tokio::fs;
 
 use super::{file_sha256, FetchAdapter};
+
+const GITHUB_DOWNLOAD_BASH_URL: &str = "https://github.com/0x676e67/fs/releases/download/model";
 
 pub struct GithubAdapter;
 
@@ -22,17 +21,16 @@ impl FetchAdapter for GithubAdapter {
             fs::create_dir_all(&model_dir).await?;
         }
 
-        // Build version info path
-        let version_info_path = model_dir.join(constant::VERSION_INFO);
+        // Build version sha256 filepath
+        let sha256_filename = model_dir.join(format!("{model_name}.sha256"));
 
         // Build model url
-        let model_url =
-            format!("https://github.com/0x676e67/fs/releases/download/model/{model_name}");
+        let model_url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{model_name}");
 
         // check version.json is exist
-        if version_info_path.exists() && update_check {
-            tracing::info!("deleting {}", version_info_path.display());
-            fs::remove_file(&version_info_path).await?;
+        if sha256_filename.exists() && update_check {
+            tracing::info!("deleting {}", sha256_filename.display());
+            fs::remove_file(&sha256_filename).await?;
         }
 
         // Build model file path
@@ -46,21 +44,9 @@ impl FetchAdapter for GithubAdapter {
 
         // If update_check is true, check the hash of the model
         if update_check {
-            if let Some(version_info) = version_info(&version_info_path).await {
-                // Get model name without extension
-                let model_name = model_name
-                    .split('.')
-                    .next()
-                    .ok_or_else(|| Error::InvalidModelName(model_name.to_string()))?;
-
-                // Get expected hash from version.json
-                let expected_hash = version_info
-                    .get(model_name)
-                    .ok_or_else(|| Error::InvalidModelVersionInfo(model_name.to_string()))?;
-
+            if let Some(expected_hash) = sha256(&sha256_filename).await {
                 let current_hash = file_sha256(&model_file).await?;
-
-                if current_hash.ne(expected_hash) {
+                if current_hash.ne(&expected_hash) {
                     tracing::info!(
                         "model {} hash mismatch, downloading...",
                         model_file.display()
@@ -74,24 +60,19 @@ impl FetchAdapter for GithubAdapter {
     }
 }
 
-async fn version_info(version_info_path: &PathBuf) -> Option<HashMap<String, String>> {
-    // Check if version.json exists
-    let version_info: HashMap<String, String> = if version_info_path.exists() {
-        let data = fs::read_to_string(&version_info_path).await.ok()?;
-        serde_json::from_str(&data).ok()?
+async fn sha256(filepath: &PathBuf) -> Option<String> {
+    if filepath.exists() {
+        tracing::info!("{} exists, skipping download", filepath.display());
+        fs::read_to_string(&filepath).await.ok()
     } else {
-        // Download version.json
-        download_file(constant::GITHUB_VERSION_INFO_URL, constant::VERSION_INFO)
-            .await
-            .ok()?;
-        let data = fs::read_to_string(version_info_path).await.ok()?;
-        serde_json::from_str(&data).ok()?
-    };
-
-    Some(version_info)
+        let filename = filepath.file_name()?.to_str()?;
+        let url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{filename}");
+        download_file(&url, filepath).await.ok()?;
+        fs::read_to_string(&filepath).await.ok()
+    }
 }
 
-async fn download_file<P: AsRef<Path>>(url: &str, filename: P) -> Result<()> {
+async fn download_file<P: AsRef<Path>>(url: &str, file: P) -> Result<()> {
     use futures_util::StreamExt;
 
     // Fetch the response
@@ -107,7 +88,7 @@ async fn download_file<P: AsRef<Path>>(url: &str, filename: P) -> Result<()> {
     let pb = progress::ProgressBar::new(content_length)?;
 
     // Create a file
-    let mut tmp_file = fs::File::create(filename.as_ref()).await?;
+    let mut tmp_file = fs::File::create(file.as_ref()).await?;
 
     while let Some(item) = byte_stream.next().await {
         let bytes = item?;

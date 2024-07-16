@@ -1,6 +1,6 @@
 pub mod github;
 mod progress;
-pub mod r2;
+pub mod s3;
 
 use std::path::PathBuf;
 
@@ -31,7 +31,7 @@ pub trait FetchAdapter {
 /// Enum representing the ONNX model storage options.
 /// Currently, there are two options: S3 and Github.
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
-pub enum ONNXFetchConfig {
+pub enum Config {
     /// Represents the AWS S3 storage option.
     S3 {
         /// The name of the bucket.
@@ -58,28 +58,28 @@ pub enum ONNXFetchConfig {
     Github,
 }
 
-impl Default for ONNXFetchConfig {
+impl Default for Config {
     fn default() -> Self {
-        ONNXFetchConfig::Github
+        Config::Github
     }
 }
 
-pub enum ONNXFetch {
-    R2(r2::R2Adapter),
+pub enum Adapter {
+    S3(s3::S3Adapter),
     Github(github::GithubAdapter),
 }
 
-impl ONNXFetch {
-    pub async fn new(onnx_store: ONNXFetchConfig) -> Self {
-        match onnx_store {
-            ONNXFetchConfig::S3 {
+impl Adapter {
+    pub async fn new(config: Config) -> Self {
+        match config {
+            Config::S3 {
                 bucket_name,
                 prefix_key,
                 url: cloudflare_kv_uri,
                 client_id: cloudflare_kv_client_id,
                 secret: cloudflare_kv_secret,
             } => {
-                let r2 = r2::R2Adapter::new(
+                let r2 = s3::S3Adapter::new(
                     bucket_name,
                     prefix_key,
                     cloudflare_kv_uri,
@@ -87,20 +87,20 @@ impl ONNXFetch {
                     cloudflare_kv_secret,
                 )
                 .await;
-                ONNXFetch::R2(r2)
+                Adapter::S3(r2)
             }
-            ONNXFetchConfig::Github => ONNXFetch::Github(github::GithubAdapter),
+            Config::Github => Adapter::Github(github::GithubAdapter),
         }
     }
 }
 
-impl Default for ONNXFetch {
+impl Default for Adapter {
     fn default() -> Self {
-        ONNXFetch::Github(github::GithubAdapter)
+        Adapter::Github(github::GithubAdapter)
     }
 }
 
-impl FetchAdapter for ONNXFetch {
+impl FetchAdapter for Adapter {
     async fn fetch_model(
         &self,
         model_name: &'static str,
@@ -108,8 +108,8 @@ impl FetchAdapter for ONNXFetch {
         update_check: bool,
     ) -> Result<PathBuf> {
         match self {
-            ONNXFetch::R2(r2) => r2.fetch_model(model_name, model_dir, update_check).await,
-            ONNXFetch::Github(github) => {
+            Adapter::S3(r2) => r2.fetch_model(model_name, model_dir, update_check).await,
+            Adapter::Github(github) => {
                 github
                     .fetch_model(model_name, model_dir, update_check)
                     .await

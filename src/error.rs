@@ -37,7 +37,7 @@ pub enum Error {
     InvalidModelName(String),
 
     #[error("invalid model version info: {0}")]
-    InvalidModelVersionInfo(String),
+    InvalidModelSha256(String),
 
     #[error(transparent)]
     ImageDecodeError(#[from] base64::DecodeError),
@@ -60,7 +60,7 @@ pub enum Error {
     #[error(transparent)]
     ReqwestError(#[from] reqwest::Error),
 
-    #[error("Cloudflare R2 SDK error: {0}")]
+    #[error("Cloudflare S3 SDK error: {0}")]
     CloudflareR2SdkError(String),
 
     #[error("ONNX session not initialized")]
