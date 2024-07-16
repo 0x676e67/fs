@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use super::{file_sha256, FetchAdapter};
+use super::FetchAdapter;
 use crate::error::Error;
 use crate::onnx::adapter::progress;
-use crate::{constant, Result};
+use crate::Result;
 use aws_config::{BehaviorVersion, SdkConfig};
 use aws_sdk_s3::config::{Credentials, Region, SharedCredentialsProvider};
 use aws_sdk_s3::Client;
@@ -14,15 +13,15 @@ use tokio::sync::OnceCell;
 
 static S3_CONFIG: OnceCell<SdkConfig> = OnceCell::const_new();
 
-/// A struct providing most necessary APIs to work with Cloudflare R2 object storage.
+/// A struct providing most necessary APIs to work with Cloudflare S3 object storage.
 #[derive(Debug, Clone)]
-pub struct R2Adapter {
+pub struct S3Adapter {
     bucket_name: String,
     prefix_key: Option<String>,
     client: Arc<Client>,
 }
 
-impl R2Adapter {
+impl S3Adapter {
     /// Creates a new instance of R2Manager. The region is set to us-east-1 which aliases
     /// to auto. Read more here <https://developers.cloudflare.com/r2/api/s3/api/>.
     pub async fn new(
@@ -31,7 +30,7 @@ impl R2Adapter {
         url: String,
         client_id: String,
         secret: String,
-    ) -> R2Adapter {
+    ) -> S3Adapter {
         // Load AWS SDK configuration
         let s3_config = S3_CONFIG
             .get_or_init(|| async {
@@ -46,31 +45,25 @@ impl R2Adapter {
             })
             .await;
 
-        R2Adapter {
+        S3Adapter {
             bucket_name,
             prefix_key,
             client: Arc::new(aws_sdk_s3::Client::new(s3_config)),
         }
     }
 
-    async fn version_info(&self, version_info_path: &PathBuf) -> Option<HashMap<String, String>> {
-        // Check if version.json exists
-        let version_info: HashMap<String, String> = if version_info_path.exists() {
-            let data = fs::read_to_string(&version_info_path).await.ok()?;
-            serde_json::from_str(&data).ok()?
+    async fn sha256(&self, filepath: &PathBuf) -> Option<String> {
+        if filepath.exists() {
+            tracing::info!("{} exists, skipping download", filepath.display());
+            fs::read_to_string(&filepath).await.ok()
         } else {
-            // Download version.json
-            self.download_file(constant::VERSION_INFO, version_info_path)
-                .await
-                .ok()?;
-            let data = fs::read_to_string(version_info_path).await.ok()?;
-            serde_json::from_str(&data).ok()?
-        };
-
-        Some(version_info)
+            let filename = filepath.file_name()?.to_str()?;
+            self.download_file(filename, filepath).await.ok()?;
+            fs::read_to_string(filepath).await.ok()
+        }
     }
 
-    async fn download_file(&self, key: &str, model_file: &PathBuf) -> Result<()> {
+    async fn download_file(&self, key: &str, filepath: impl AsRef<Path>) -> Result<()> {
         // Prefix key with the prefix_key if it exists
         let key = self
             .prefix_key
@@ -98,7 +91,7 @@ impl R2Adapter {
         let pb = progress::ProgressBar::new(len)?;
 
         // Open file for writing
-        let mut tmp_file = fs::File::create(model_file).await?;
+        let mut tmp_file = fs::File::create(filepath).await?;
 
         // Copy the stream to the file
         tokio::io::copy(&mut pb.wrap_async_read(stream), &mut tmp_file).await?;
@@ -108,7 +101,7 @@ impl R2Adapter {
     }
 }
 
-impl FetchAdapter for R2Adapter {
+impl FetchAdapter for S3Adapter {
     async fn fetch_model(
         &self,
         model_name: &'static str,
@@ -121,13 +114,13 @@ impl FetchAdapter for R2Adapter {
             fs::create_dir_all(&model_dir).await?;
         }
 
-        // Build version info path
-        let version_info_path = model_dir.join(constant::VERSION_INFO);
+        // Build version sha256 filepath
+        let sha256_filename = model_dir.join(format!("{model_name}.sha256"));
 
         // check version.json is exist
-        if version_info_path.exists() && update_check {
-            tracing::info!("deleting {}", version_info_path.display());
-            fs::remove_file(&version_info_path).await?;
+        if sha256_filename.exists() && update_check {
+            tracing::info!("deleting {}", sha256_filename.display());
+            fs::remove_file(&sha256_filename).await?;
         }
 
         // Build model file path
@@ -141,21 +134,9 @@ impl FetchAdapter for R2Adapter {
 
         // If update_check is true, check the hash of the model
         if update_check {
-            if let Some(version_info) = self.version_info(&version_info_path).await {
-                // Get model name without extension
-                let model_name = model_name
-                    .split('.')
-                    .next()
-                    .ok_or_else(|| Error::InvalidModelName(model_name.to_string()))?;
-
-                // Get expected hash from version.json
-                let expected_hash = version_info
-                    .get(model_name)
-                    .ok_or_else(|| Error::InvalidModelVersionInfo(model_name.to_string()))?;
-
-                let current_hash = file_sha256(&model_file).await?;
-
-                if current_hash.ne(expected_hash) {
+            if let Some(expected_hash) = self.sha256(&sha256_filename).await {
+                let current_hash = Self::file_sha256(&model_file).await?;
+                if current_hash.ne(&expected_hash) {
                     tracing::info!(
                         "model {} hash mismatch, downloading...",
                         model_file.display()

@@ -4,8 +4,8 @@ mod util;
 mod variant;
 
 use crate::Result;
-pub use adapter::ONNXFetch;
-pub use adapter::ONNXFetchConfig;
+pub use adapter::Adapter;
+pub use adapter::Config;
 pub use predictor::Predictor;
 use predictor::{
     brokenJigsawbrokenjigsaw_swap::BrokenJigsawbrokenjigsaw_swap, card::CardPredictor,
@@ -32,7 +32,7 @@ pub struct ONNXConfig {
     update_check: bool,
     num_threads: u16,
     allocator: ort::AllocatorType,
-    onnx_store: ONNXFetch,
+    onnx_store: Adapter,
 }
 
 impl Default for ONNXConfig {

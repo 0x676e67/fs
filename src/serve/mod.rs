@@ -6,7 +6,7 @@ use self::solver::FallbackSolver;
 pub use self::task::Task;
 use crate::{
     error::Error,
-    onnx::{ONNXConfig, ONNXFetch},
+    onnx::{Adapter, ONNXConfig},
     serve::solver::TypedFallback,
     BootArgs, Result,
 };
@@ -66,7 +66,7 @@ pub async fn run(args: BootArgs) -> Result<()> {
                             .update_check(args.update_check)
                             .num_threads(args.num_threads)
                             .allocator(args.allocator)
-                            .onnx_store(ONNXFetch::new(args.store).await)
+                            .onnx_store(Adapter::new(args.store).await)
                             .build(),
                     )
                     .predictors(Default::default())

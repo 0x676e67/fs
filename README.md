@@ -51,7 +51,7 @@ ArkoseLabs funcaptcha challenge solver server
 - `--fallback-endpoint`, Fallback solver endpoint
 - `--fallback-image-limit`, Fallback solver image limit, default 1
 
-subcommand `r2` represents the CloudFlare R2 storage option, `github` represents the Github storage option
+subcommand `r2` represents the CloudFlare S3 storage option, `github` represents the Github storage option
 
 ```shell
 $ fs -h
@@ -84,7 +84,7 @@ Run server
 Usage: fs run [OPTIONS] <COMMAND>
 
 Commands:
-  r2      Represents the CloudFlare R2 storage option
+  r2      Represents the S3 storage option
   github  Represents the Github storage option
   help    Print this message or the help of the given subcommand(s)
 

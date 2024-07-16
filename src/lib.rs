@@ -1,5 +1,4 @@
 pub mod alloc;
-pub mod constant;
 #[cfg(target_family = "unix")]
 pub mod daemon;
 pub mod error;
@@ -105,7 +104,7 @@ pub struct BootArgs {
     pub fallback_image_limit: usize,
 
     #[clap(subcommand)]
-    pub store: onnx::ONNXFetchConfig,
+    pub store: onnx::Config,
 }
 
 fn alloc_parser(s: &str) -> Result<ort::AllocatorType> {

@@ -1,5 +1,4 @@
 use crate::{
-    constant,
     error::Error,
     homedir,
     onnx::{
@@ -188,11 +187,7 @@ async fn create_onnx_session(onnx: &'static str, config: &ONNXConfig) -> Result<
         .model_dir
         .as_ref()
         .map(|x| x.to_owned())
-        .unwrap_or_else(|| {
-            homedir::home_dir()
-                .unwrap_or_default()
-                .join(constant::MODEL_DIR)
-        });
+        .unwrap_or_else(|| homedir::home_dir().unwrap_or_default().join("onnx_models"));
 
     // Fetch the model file
     let model_file = config
