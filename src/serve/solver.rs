@@ -154,16 +154,17 @@ impl Solver for DefaultSolver {
                 let predictor = predictor.clone();
                 let image = image.clone();
                 tokio::spawn(async move {
-                    let answer = predictor.predict_base64(&image)?;
-                    if let Some(err) = tx.send((index, answer)).await.err() {
-                        tracing::error!("Error sending solver result: {}", err);
-                    }
-                    std::result::Result::<_, Error>::Ok(())
+                    let answer = predictor
+                        .predict_base64(&image)
+                        .map_err(|err| {
+                            tracing::warn!("Error processing image: {}", err);
+                            err
+                        })
+                        .unwrap_or(0);
+
+                    tx.send((index, answer)).await
                 });
             }
-
-            // Drop the original sender so the receiver knows when all tasks are done
-            drop(tx);
 
             // Collect and sort the results
             let mut objects = vec![];
