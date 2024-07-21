@@ -90,7 +90,6 @@ pub async fn run(args: BootArgs) -> Result<()> {
     // Create the router.
     let route = Router::new()
         .route("/task", post(task))
-        .fallback(handler_404)
         .layer(
             TraceLayer::new_for_http()
                 .make_span_with(DefaultMakeSpan::default().level(Level::INFO))
@@ -148,11 +147,4 @@ async fn task(
 
     // Process the solver task
     state.solver.process(&task).await
-}
-
-/// Handles the 404 requests.
-async fn handler_404() -> impl IntoResponse {
-    Html(
-        r#"<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>NOTHING TO SEE HERE</title><style>body{font-family:Arial,sans-serif;background-color:#f8f8f8;margin:0;padding:0;display:flex;justify-content:center;align-items:center;height:100vh;color:#333}.container{text-align:center;max-width:600px;padding:20px;background-color:#fff;box-shadow:0 4px 8px rgba(0,0,0,0.1)}h1{font-size:72px;margin:0;color:#ff6f61}a{display:block;margin-top:20px;color:#ff6f61;text-decoration:none;font-weight:bold;font-size:18px}a:hover{text-decoration:underline}</style></head><body><div class="container"><h1>NOTHING TO SEE HERE</h1></div></body></html>"#,
-    )
 }
