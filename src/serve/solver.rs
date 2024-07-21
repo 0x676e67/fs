@@ -166,6 +166,8 @@ impl Solver for DefaultSolver {
                 });
             }
 
+            drop(tx);
+
             // Collect and sort the results
             let mut objects = vec![];
             while let Some(result) = rx.recv().await {
