@@ -154,10 +154,7 @@ impl Solver for DefaultSolver {
                 let predictor = predictor.clone();
                 let image = image.clone();
                 let _ = tokio::task::spawn_blocking(move || {
-                    let answer = predictor
-                        .predict_base64(&image)
-                        .unwrap_or(0);
-
+                    let answer = predictor.predict_base64(&image).unwrap_or(0);
                     if let Some(err) = tx.blocking_send((index, answer)).err() {
                         tracing::warn!("Error sending result: {}", err);
                     }
