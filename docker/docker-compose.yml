@@ -1,0 +1,9 @@
+services:
+  fs:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ${PWD}/onnx_models/:/root/onnx_models
+    ports:
+      - "8000:8000"
