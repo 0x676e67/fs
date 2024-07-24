@@ -10,12 +10,7 @@ use crate::{
     serve::solver::TypedFallback,
     BootArgs, Result,
 };
-use axum::{
-    extract::State,
-    response::{Html, IntoResponse},
-    routing::post,
-    Json, Router,
-};
+use axum::{extract::State, routing::post, Json, Router};
 use axum_server::{tls_rustls::RustlsConfig, Handle};
 use solver::{DefaultSolver, Solver, SolverHelper};
 use std::{str::FromStr, sync::Arc};
