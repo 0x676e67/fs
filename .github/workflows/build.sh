@@ -31,7 +31,7 @@ log() {
 
 # Build support paltform target
 # 1. Linux (force musl)
-linux_target=("x86_64-unknown-linux-gnu")
+linux_target=("x86_64-unknown-linux-gnu:jemalloc")
 
 # 2. MacOS
 macos_target=(
