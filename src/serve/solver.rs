@@ -153,17 +153,13 @@ impl Solver for DefaultSolver {
                 let tx = tx.clone();
                 let predictor = predictor.clone();
                 let image = image.clone();
-                tokio::spawn(async move {
-                    let answer = predictor
-                        .predict_base64(&image)
-                        .map_err(|err| {
-                            tracing::warn!("Error processing image: {}", err);
-                            err
-                        })
-                        .unwrap_or(0);
-
-                    tx.send((index, answer)).await
-                });
+                let _ = tokio::task::spawn_blocking(move || {
+                    let answer = predictor.predict_base64(&image).unwrap_or(0);
+                    if let Some(err) = tx.blocking_send((index, answer)).err() {
+                        tracing::warn!("Error sending result: {}", err);
+                    }
+                })
+                .await;
             }
 
             drop(tx);
