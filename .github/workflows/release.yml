@@ -131,10 +131,4 @@ jobs:
       - name: Build and push
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          docker buildx build --platform linux/amd64,linux/arm64/v8 -t ghcr.io/0x676e67/fs:latest -t ghcr.io/0x676e67/fs:${{ steps.tag.outputs.tag }} . --push
-
-
-      - name: Build and push
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          docker buildx build --platform linux/amd64,linux/arm64/v8 -t ghcr.io/0x676e67/fs:latest -t ghcr.io/0x676e67/fs:${{ steps.tag.outputs.tag }} . --push
+          docker buildx build -f docker/Dockerfile --platform linux/amd64,linux/arm64/v8 -t ghcr.io/0x676e67/fs:latest -t ghcr.io/0x676e67/fs:${{ steps.tag.outputs.tag }} . --push
