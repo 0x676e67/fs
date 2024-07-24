@@ -1,6 +1,6 @@
 [package]
 name = "fs"
-version = "0.3.5"
+version = "0.3.6"
 edition = "2021"
 description = "ArkoseLabs funcaptcha challenge solver server"
 readme = "README.md"
@@ -18,7 +18,7 @@ typed-builder = "0.19"
 base64 = "0.22"
 image = "0.25"
 ndarray = "0.15.6"
-ort = { version = "2.0.0-rc.2", features = ["ndarray", "half"] }
+ort = { version = "2.0.0-rc.4", features = ["ndarray", "half"] }
 sha2 = "0.10.8"
 clap = { version = "4", features = ["derive", "env"] }
 self_update = { version = "0.39.0", package = "self-github-update", features = ["archive-tar", "compression-flate2"]  }
@@ -64,7 +64,7 @@ jemallocator = { package = "tikv-jemallocator", version = "0.6", optional = true
 mimalloc = { version = "0.1", default-features = false, optional = true }
 
 [features]
-default = ["jemallocator"]
+default = ["jemalloc"]
 load-dynamic = ["ort/load-dynamic"]
 cuda = ["ort/cuda"]
 rocm = ["ort/rocm"]
