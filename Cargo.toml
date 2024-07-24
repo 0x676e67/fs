@@ -36,7 +36,7 @@ axum = { version = "0.7.5" }
 axum-server = { version = "0.6.0", features = ["tls-rustls"] }
 tower = { version = "0.4.13", default-features = false, features = ["limit"] }
 tower-http = {version = "0.5.2", features = ["trace", "limit", "timeout"] }
-rustls = { version = "0.23.7" }
+rustls = { version = "0.23" }
 proc_variant ={ path = "src/onnx/proc_variant" }
 
 # store
