@@ -33,7 +33,7 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 # Http Server
 axum = { version = "0.7.5" }
-axum-server = { version = "0.6.0", features = ["tls-rustls"] }
+axum-server = { version = "0.7.0", features = ["tls-rustls"] }
 tower = { version = "0.4.13", default-features = false, features = ["limit"] }
 tower-http = {version = "0.5.2", features = ["trace", "limit", "timeout"] }
 rustls = { version = "0.23" }
