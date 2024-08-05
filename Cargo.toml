@@ -44,7 +44,7 @@ aws-config = { version = "1", features = ["behavior-version-latest"] }
 aws-sdk-s3 = "1"
 
 [target.'cfg(target_os = "windows")'.dependencies.windows-sys]
-version = "0.48.0"
+version = "0.59.0"
 default-features = false
 features = ["Win32_System_Com_CallObj", "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell_Common"]
 
