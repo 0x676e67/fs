@@ -42,7 +42,7 @@ impl Default for ONNXConfig {
             update_check: false,
             num_threads: 4,
             allocator: ort::AllocatorType::Arena,
-            onnx_store: Default::default(),
+            onnx_store: Adapter::Github(Default::default()),
         }
     }
 }

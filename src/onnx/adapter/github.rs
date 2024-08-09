@@ -4,9 +4,13 @@ use tokio::fs;
 
 use super::FetchAdapter;
 
-const GITHUB_DOWNLOAD_BASH_URL: &str = "https://github.com/0x676e67/fs/releases/download/model";
+pub struct GithubAdapter(pub String);
 
-pub struct GithubAdapter;
+impl Default for GithubAdapter {
+    fn default() -> Self {
+        Self("https://github.com/0x676e67/fs/releases/download/model".to_owned())
+    }
+}
 
 impl FetchAdapter for GithubAdapter {
     async fn fetch_model(
@@ -25,7 +29,7 @@ impl FetchAdapter for GithubAdapter {
         let sha256_filename = model_dir.join(format!("{model_name}.sha256"));
 
         // Build model url
-        let model_url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{model_name}");
+        let model_url = format!("{}/{model_name}", self.0);
 
         // check version.json is exist
         if sha256_filename.exists() && update_check {
@@ -44,7 +48,7 @@ impl FetchAdapter for GithubAdapter {
 
         // If update_check is true, check the hash of the model
         if update_check {
-            if let Some(expected_hash) = sha256(&sha256_filename).await {
+            if let Some(expected_hash) = sha256(&self.0, &sha256_filename).await {
                 let current_hash = Self::file_sha256(&model_file).await?;
                 if current_hash.ne(&expected_hash) {
                     tracing::info!(
@@ -88,13 +92,13 @@ async fn download_file(url: &str, filepath: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-async fn sha256(filepath: &PathBuf) -> Option<String> {
+async fn sha256(url: &str, filepath: &PathBuf) -> Option<String> {
     if filepath.exists() {
         tracing::info!("{} exists, skipping download", filepath.display());
         fs::read_to_string(&filepath).await.ok()
     } else {
         let filename = filepath.file_name()?.to_str()?;
-        let url = format!("{GITHUB_DOWNLOAD_BASH_URL}/{filename}");
+        let url = format!("{url}/{filename}");
         download_file(&url, filepath).await.ok()?;
         fs::read_to_string(&filepath).await.ok()
     }

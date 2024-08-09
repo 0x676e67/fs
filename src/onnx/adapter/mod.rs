@@ -73,13 +73,11 @@ pub enum Config {
         secret: String,
     },
     /// Represents the Github storage option.
-    Github,
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Config::Github
-    }
+    Github {
+        /// The URL of the Github repository.
+        #[clap(short = 'l', long)]
+        url: String,
+    },
 }
 
 pub enum Adapter {
@@ -107,14 +105,8 @@ impl Adapter {
                 .await;
                 Adapter::S3(r2)
             }
-            Config::Github => Adapter::Github(github::GithubAdapter),
+            Config::Github { url } => Adapter::Github(github::GithubAdapter(url)),
         }
-    }
-}
-
-impl Default for Adapter {
-    fn default() -> Self {
-        Adapter::Github(github::GithubAdapter)
     }
 }
 
